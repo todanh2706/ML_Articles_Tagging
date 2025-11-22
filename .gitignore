@@ -6,3 +6,5 @@ train
 val
 df_for_basic.pkl
 df_for_bert.pkl
+figures
+dataset

@@ -1,2 +1,89 @@
 \pagebreak
 \section{Phân tích khám phá dữ liệu}
+\subsection{Thống kê mô tả}
+
+
+\subsection{Phân tích phân bố nhãn}
+
+
+
+\subsection{Phân tích mối quan hệ giữa các thuộc tính}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{img/quality_content_len_distribution.png}
+    \caption{Phân bố độ dài nội dung bài viết}
+\end{figure}
+
+\textit{Biểu đồ Histogram} cho thấy độ dài nội dung bài viết có phân bố lệch trái mạnh. Phần lớn bài báo có độ dài từ khoảng 1.000 đến 6.000 ký tự, trong khi một số ít bài có độ dài rất lớn (lên tới hơn 60.000 ký tự), tạo ra các \textit{giá trị ngoại lệ} (outliers). Điều này phản ánh sự đa dạng về cấu trúc bài viết, từ các bản tin ngắn đến các bài phân tích chuyên sâu.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{img/quality_title_len_distribution.png}
+    \caption{Phân bố độ dài tiêu đề}
+\end{figure}
+
+Độ dài tiêu đề có phân bố gần giống chuẩn, tập trung chủ yếu trong khoảng 50 đến 75 ký tự. Điều này cho thấy các bài báo thường được tối ưu hoá tiêu đề để vừa ngắn gọn, vừa truyền tải đủ thông tin với một số ít tiêu đề có độ dài cực lớn hoặc cực nhỏ xuất hiện như các trường hợp ngoại lệ.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{img/rel_articles_per_day.png}
+    \caption{Số lượng bài viết theo ngày}
+\end{figure}
+Do dữ liệu được crawl chủ yếu trong các tháng gần đây nên số lượng bài viết tập trung trong nửa cuối năm 2025.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{img/rel_articles_per_hour.png}
+    \caption{Số lượng bài viết theo giờ trong ngày}
+\end{figure}
+Biểu đồ cho thấy các bài báo chủ yếu được xuất bản trong khoảng 5h–23h hằng ngày.
+– Khung 8h–11h là thời điểm có lượng bài cao nhất (đỉnh khoảng 1.400–1.500 bài).
+– Tối từ 16h–20h cũng có lượng bài cao.
+– Giờ khuya (0h–3h) có số bài rất ít.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{img/rel_source_main_tag_heatmap.png}
+    \caption{Heatmap số lượng bài theo Source và Main Tag}
+\end{figure}
+Vì toàn bộ dữ liệu đều đến từ một nguồn (“Thanh Niên”), \textit{heatmap} cho thấy số bài giữa các main\_tag khá đồng đều: mỗi nhóm có khoảng 2.900–3.000 bài viết. Điều này chứng tỏ bộ dữ liệu được thu thập tương đối cân bằng theo từng chủ đề.
+
+\subsection{Kiểm tra chất lượng dữ liệu}
+Qua phân tích phân bố:
+– Cả tiêu đề và nội dung đều có phân bố hợp lý, không có dấu hiệu lỗi mã hóa.
+– Tuy nhiên, một số bài có nội dung quá dài (60.000+ ký tự), đây có thể là bài dạng phỏng vấn hoặc tổng hợp nhiều đoạn, nhưng cũng có thể là lỗi trùng lặp hoặc gộp nội dung.
+– Không thấy hiện tượng tiêu đề rỗng hoặc content rỗng qua biểu đồ.
+
+Biểu đồ phân bố theo ngày cho thấy dữ liệu lịch sử trước năm 2023 gần như không có, nhưng đây không phải lỗi mà là đặc điểm của nguồn dữ liệu (crawler chỉ hoạt động trong một số năm gần đây).
+
+\subsection{EDA cho dữ liệu phi cấu trúc}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{img/text_avg_content_len_by_main_tag.png}
+    \caption{Độ dài trung bình nội dung theo Main Tag}
+\end{figure}
+Chính trị và Kinh tế có độ dài ~4200 ký tự, cao nhất; Thế giới thấp nhất (~2700 ký tự).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{img/text_rel_sentences_contentlen.png}
+    \caption{Quan hệ giữa số câu và độ dài nội dung}
+\end{figure}
+
+\textit{Scatterplot} cho thấy mối quan hệ tuyến tính mạnh giữa số câu và độ dài nội dung: bài viết dài thường có số câu nhiều tương ứng. Phần lớn bài nằm dưới 150 câu, tuy nhiên có một số trường hợp đặc biệt lên đến 300–400 câu.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{img/text_top_30_words.png}
+    \caption{Top 30 từ xuất hiện nhiều nhất sau khi lọc stopwords}
+\end{figure}
+Các từ xuất hiện nhiều nhất gồm: “công”, “không”, “học”, “chính”, “đồng”, “quốc”, “thể”, “trường”…
+Các từ này chủ yếu là danh từ hoặc các từ mang nghĩa nội dung quan trọng, phản ánh tính chất báo chí của tập dữ liệu. Tần suất từ cao (40.000–100.000 lần) chứng tỏ bộ dữ liệu rất lớn và có sự lặp lại của nhiều chủ đề tương đồng.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{img/rel_content_len_by_main_tag.png}
+    \caption{Độ dài nội dung theo Main Tag}
+\end{figure}
+Nhóm Chính trị và Kinh tế có độ dài trung bình cao nhất (khoảng trên 4.200 ký tự), tiếp theo là Giáo dục. Các nhóm Sức khoẻ, Thế giới, Thể thao, Thời sự có độ dài trung bình thấp hơn đáng kể (~2.700–3.200 ký tự). Điều này phù hợp với thực tế: các bài phân tích sâu thường thuộc nhóm Chính trị–Kinh tế.
