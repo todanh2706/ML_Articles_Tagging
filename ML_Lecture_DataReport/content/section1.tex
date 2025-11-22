@@ -1,3 +1,10 @@
 \pagebreak
 \section{Giới thiệu}
-
+Trong kỷ nguyên số hoá hiện nay, khối lượng thông tin được tạo ra hàng ngày trên các phương tiện truyền thông trực tiếp đang tăng trưởng theo cấp số nhân. Đối với các toà soạn báo điện tử và các hệ thống tổng hợp tin tức tại Việt Nam, việc quản lý, tổ chức và phân phối nội dung đến đúng đối tượng độc giả là một thách thức lớn. Các phương pháp phân loại thủ công truyền thống không còn đáp ứng được yêu cầu về tốc độ và khả năng mở rộng, đồng thời dễ xảy ra sai sót do yếu tố chủ quan của con người. Hơn nữa, cách mà đọc giả tiếp cận thông tin hiện đại đã chuyển từ việc đọc thụ động theo chuyên mục sang tìm kiếm chủ động theo từ khoá và chủ đề.\\
+Xuất phát từ nhu cầu đó, đồ án tập trung nghiên cứu và xây dựng một hệ thống phân loại văn bản tự động cho tin tức tiếng Việt. Mục tiêu cốt lõi là phát triển một giải pháp có khả năng gán nhãn chủ đề chính xác cho bài báo dựa trên nội dung văn bản, giúp tối ưu hoá trải nghiệm người dùng và hỗ trợ quá trình biên tập nội dung.\\
+Để giải quyết bài toán phân loại văn bản tiếng Việt đa lớp (\textit{Multi-class Text Classification}), đồ án thực hiện khảo sát và triển khai so sánh hiệu năng trên ba hướng tiếp cận đại điện cho các giai đoạn phát triển của xử lý ngôn ngữ tự nhiên (\textit{Natural Language Processing}):
+\begin{itemize}
+    \item \textbf{Mô hình Học máy truyền thống (Baseline):} sử dụng phương pháp biểu diễn văn bản \textbf{TF-IDF} (\textit{Term Frequency-Inverse Document Frequency}) kết hợp với thuật toán \textbf{Support Vector Machine}. Đây là phưong pháp nền tảng, giúp thiết lập mức chuẩn về độ chính xác thời gian huấn luyện.
+    \item \textbf{Mô hình Học sâu (Deep Learning):} Sử dụng \textbf{FastText}, một thư viện được phát triển bởi Facebook AI Research, FastText có ưu điểm vượt trội về tốc độ huấn luyện và khả năng xử lý tốt các từ hiểm (\textit{out-of-vocabulary}) nhờ vào việc sử dụng thông tin n-gram mức thứ tự, phù hợp với đặc điểm hình thái của tiếng Việt.
+    \item \textbf{Mô hình Ngôn ngữ Tiền huấn luyện (State-of-the-art):} Ứng dụng \textbf{PhoBERT}, một mô hình dựa trên kiến trúc Transformer (tương tự RoBERTa) được huấn luyện chuyên biệt trên dữ liệu tiếng Việt quy mô lớn. PhoBERT tận dụng cơ chế Attention để nắm bắt ngữ cảnh sâu sắc của từ ngữ, hứa hẹn mang lại độ chính xác cao nhất.
+\end{itemize}

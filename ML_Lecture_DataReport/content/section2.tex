@@ -61,3 +61,50 @@ Nhóm quyết định dùng mô hình cơ sở dữ liệu quan hệ (relational
     \item Với SQLite, nhóm có thể thiết lập quy trình ghi dữ liệu liên tục theo từng lô nhỏ (5 bài một lần insert) để đảm bảo hiệu suất mà có thể tránh các rủi ro kỹ thuật (mất mạng, sập nguồn) làm mất data trong quá trình cào bài báo.
     \item Việc dùng CSDL đã có ép kiểu (DATETIME) và đặt khoá chính từ trước sẽ giúp loại bỏ các dữ liệu trùng lặp hoặc gặp lỗi trong quá trình trích xuất, giúp làm giảm công việc cho khâu làm sạch.
 \end{itemize}
+\subsection{Quy trình làm sạch và tiền xử lý dữ liệu}
+Trước khi đưa vào bất cứ mô hình nào, dữ liệu thô đều trải qua các bước làm sạch cơ bản để loại bỏ nhiễu:
+\begin{itemize}
+    \item \textbf{Xử lý giá trị thiếu và trùng lặp:} Thực hiện loại bỏ các mẫu dữ liệu bị khuyết thiếu thông tin quan trọng (như tiêu đề hoặc nội dung) và các bài viết bị trùng lặp hoàn toàn để tránh hiện tượng rò rỉ dữ liệu (\textit{data leakage}) giữa các tập huấn luyện và kiểm thử. Sau bước này, kích thước bộ dữ liệu còn lại là 20,777 bài viết.
+    \item \textbf{Loại nhiễu định dạng:} Dữ liệu văn bản được quét để phát hiện và loại bỏ các đoạn mã HTML, CSS hoặc JavaScript không mang ngữ nghĩa, đảm bảo nội dung đầu vào hoàn toàn là văn bản tự nhiên.
+    \item \textbf{Chuẩn hoá bảng mã Unicode:} Do đặc thù tiếng Việt có hai kiểu gõ phổ biến (dựng sẵn và tổ hợp), toàn bộ văn bản được chuẩn hoá về định dạng Unicode NFC để đảm bảo tính nhát quán trong biểu diễn ký tự.
+\end{itemize}
+Tuy nhiên, các mô hình có sự khác biệt đặc thù về cơ chế hoạt động, chủ yếu là sự khác biệt của Transformer so với phần còn lại. Vì thế giai đoạn tiền xử lý được chia thành hai luồng riêng biệt:
+\begin{itemize}
+    \item Đối với các mô hình cơ bản (TF-IDF + SVM, FastText), việc giảm chiều dữ liệu và thống nhất từ vựng là ưu tiên hàng đầu:
+    \begin{itemize}
+        \item \textbf{Chuẩn hoá ký tự thường (\textit{Lowercasing}):} Chuyển toàn bộ văn bản về chữ thường để giảm kích thước bộ từ điển mà không làm mất đi quá nhiều ngữ nghĩa quan trọng.
+        \item \textbf{Tách từ (\textit{Word Segmentation}):} Sử dụng thư viện \texttt{pyvi} để gộp các từ ghép tiếng Việt, giúp nhận diện đúng đơn vị từ vựng.
+        \item \textbf{Loại bỏ từ dừng (\textit{Stopword Removal}):} Loại bỏ các hư từ (\textit{stopwords}) dựa trên danh sách từ dừng tiếng Việt. Bước này giúp giảm nhiễu và tập trung vào các từ mang thông tin chính trị, kinh tế, xã hội đặc thù.
+    \end{itemize}
+    \item Đối với mô hình ngôn ngữ tiền huấn luyện PhoBERT, ngữ cảnh và cấu trúc câu đóng vai trò then chốt. Do đó, chiến lược xử lý được điều chỉnh như sau:
+    \begin{itemize}
+        \item \textbf{Giữ nguyên định dạng (\textit{No Lowercasing/Stopword Removal}):} Chúng tôi không chuyển văn bản về chữ thường và không loại bỏ từ dừng. Việc này nhằm bảo toàn cấu trúc ngữ pháp và thông tin về tên riêng, giúp cơ chế \textit{Attention} của PhoBERT hoạt động hiệu quả nhất.
+        \item \textbf{Tách từ (\textit{Word Segmentation}):} Tương tự như luồng cơ bản, văn bản đầu vào cho PhoBERT cũng cần dược tách từ để đồng bộ với dữ liệu mà PhoBERT đã được huấn luyện trước đó.
+    \end{itemize}
+\end{itemize}
+Cuối cùng, các nhãn đầu ra phải được mã hoá và bộ dữ liệu phải được chia thành 3 tập (Train, Validation và Test). Mã hoá nhãn là bước ánh xạ các nhãn (gồm 7 nhãn cho ngữ cảnh của đồ án này) thành các con só nguyên (từ 0 tới 6 cho ngữ cảnh của đồ án này) để phục vụ quá trình tính toán của máy. Tập dữ liệu ban đầu được chia theo tỉ lệ 80\% Train, 10\% Validation, 10\% Test. Tuy nhiên việc chia dữ liệu cần đảm bảo việc mất cân bằng (không thể có quá nhiều nhãn "Thể thao" trong một tập dữ liệu như Train), vấn đề được giải quyết bằng kỹ thuật lấy mẫu phân tầng (\textit{Stratified Sampling}). Sau khi chia dữ liệu theo phương pháp lấy mẫu phân tầng (được cung cấp bởi tham số \texttt{stratify} trong \texttt{sklearn}), bước kiểm tra lại cho ra kết quả như bảng sau:
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|l|l|l|}
+    \hline
+    \texttt{label\_encoded} & \textbf{Train} & \textbf{Validation} & \textbf{Test} \\
+    \hline
+    0 & 0.145960 & 0.145813 & 0.145813 \\
+    \hline
+    1 & 0.143854 & 0.143888 & 0.143888 \\
+    \hline
+    2 & 0.143794 & 0.143407 & 0.143888 \\
+    \hline
+    3 & 0.143132 & 0.143407 & 0.142926 \\
+    \hline
+    4 & 0.142410 & 0.142445 & 0.142445 \\
+    \hline
+    5 & 0.142109 & 0.141963 & 0.142445 \\
+    \hline
+    6 & 0.138740 & 0.139076 & 0.138595 \\
+    \hline
+\end{tabular}
+\caption{Bảng so sánh tỉ lệ phân bố của 3 tập dữ liệu}
+\label{label:my_label}
+\end{table}
+Dễ thấy từ bảng trên, tỉ lệ phân bố các nhãn của 3 tập dữ liệu khá đồng đều chứng tỏ quá trình phân chia dữ liệu đảm bảo được tính cân bằng.
