@@ -1,0 +1,63 @@
+\pagebreak
+\section{Phương pháp và nguồn thu thập dữ liệu}
+\subsection{Nguồn dữ liệu}
+Tập dữ liệu của nhóm được thu thập thông qua việc cào hơn 20,000 bài báo từ trang báo Thanh Niên (\url{https://thanhnien.vn}). Thông tin mỗi bài báo bao gồm đường link, tiêu đề, ngày đăng, nội dung, nhãn chính và các nhãn phụ nếu có.\\
+Các bài báo được cào phân bổ đều theo chủ đề chính được gắn cho bài báo đó, gồm 7 tag chính: Thể thao, Thời sự, Chính trị, Kinh tế, Giáo dục, Sức khoẻ, Thế giới.
+\subsection{Phương pháp thu thập dữ liệu}
+Để thu thập được số lượng lớn bài báo mà vẫn đảm bảo phân loại chính xác chủ đề, nhóm cần giải quyết được 3 vấn đề chính:
+\begin{itemize}
+    \item Khả năng mở rộng nguồn dữ liệu, tức là tự động hoá việc lấy thêm đường link các bài báo.
+    \item Phân tích cấu trúc HTML của một bài báo và trích xuất thông tin như tag, tiêu đề, nội dung,...
+    \item Tổ chức lưu trữ dữ liệu đã thu thập được sao cho dễ truy xuất và mở rộng.
+\end{itemize}
+\subsubsection{Tìm kiếm khả năng mở rộng nguồn dữ liệu}
+Hầu hết các trang báo mạng sẽ có các chuyên mục để người dùng có thể đọc thể loại mình muốn. Bằng việc giới hạn phạm vi thu thập trong các chuyên mục định sẵn, nhóm sẽ giải quyết được bài toán gán nhãn dữ liêu và giảm bớt công việc trong quá trình làm sạch.\\
+Một vấn đề với cách tiếp cận này các cơ chế phân trang truyền thống trên VnExpress hay Dân Trí thường áp đặt giới hạn cứng ở mức 20-30 trang lịch sử, gây khó khăn cho việc xây dựng tập dữ liệu lớn.\\
+Tuy nhiên, thông qua kỹ thuật phân tích gói tin HTTP bằng công cụ \verb|Burp Suite|, nhóm đã xác định được cơ chế truy xuất dữ liệu thông qua API ẩn của báo Thanh Niên. Khi nhấn vào nút "Xem Thêm", thay vì render lại toàn bộ trang web với nội dung mới, client sử dụng endpoint \verb|GET timelinelist/{id}/{page_number}.htm|
+để trả về dữ liệu thô chứa đường link và hình ảnh của các bài báo trong một trang lịch sử và render nó ở cuối. Điểm đặc biệt nằm ở việc tham số \verb|page_number| có thể được tuỳ biến theo ý muốn, vượt qua con số 20 - 30, cho phép nhóm tự động hóa việc truy xuất các bài viết cũ nằm ngoài phạm vi hiển thị mặc định của giao diện người dùng.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{api.png}
+    \caption{Kết quả trả về từ API ẩn của báo Thanh Niên}
+    \label{fig:placeholder}
+\end{figure}
+\subsubsection{Trích xuất dữ liệu}
+Nhóm sử dụng 3 thư viện Python cho việc trích xuất dữ liệu:
+\begin{itemize}
+    \item \verb|requests|: Thư viện dùng để gửi HTTP requests tới API cũng như đến các bài bào
+    \item \verb|Beautiful Soup|: Thư viện dùng để trích xuất thông tin từ dạng HTML, XML,.. theo điều kiện mong muốn.
+    \item \verb|sqlite3|: Connector tới sqlite, một hệ quản trị cơ sở dữ liệu SQL nhẹ, serverless, các database sẽ được xuất ra thành từng file, dùng cho việc lưu trữ các bài báo
+\end{itemize}
+Quy trình trích xuất dữ liệu từ một bài báo của nhóm gồm:
+\begin{itemize}
+    \item Lặp qua các id của từng chuyên mục và số lượng page theo cài đặt (150 trong lần chạy của nhóm).
+    \item Với mỗi \verb|id| và \verb|page_number|, gửi một HTTP request tới API ẩn của báo Thanh Niên, dùng \verb|Beautiful Soup| lọc ra danh sách các đường link đến bài báo
+    \item Gửi request tới đường link của từng bài báo đó nhận nội dung HTML trả về.
+    \item Tiếp tục dùng \verb|Beautiful Soup| để duyệt qua các HTML tag chứa nội dung bài báo gồm tiêu đề, ngày đăng, nội dung, các tag phụ và trích xuất chúng. 
+    \item Thực hiện lưu trữ nội dung đã trích xuất vào database.
+\end{itemize}
+\subsubsection{Tổ chức lưu trữ dữ liệu}
+Nhóm đã sử dụng SQLite để tổ chức lưu trữ dữ liệu. Toàn bộ dữ liệu sau khi cào được nằm trong một file \verb|articles.sqlite3| với 2 bảng \verb|articles| và \verb|sub_tags|
+\begin{lstlisting}[caption={Mã nguồn tạo bảng CSDL}]
+CREATE TABLE articles (
+    link TEXT PRIMARY KEY, 
+    publication_date DATETIME,
+    content TEXT,
+    main_tag TEXT,
+    source TEXT
+);
+
+CREATE TABLE sub_tags (
+    link TEXT,
+    tag TEXT,
+    PRIMARY KEY (link, tag),
+    FOREIGN KEY(link) REFERENCES articles(link)
+);
+\end{lstlisting}
+Nhóm quyết định dùng mô hình cơ sở dữ liệu quan hệ (relational database) thay vì dùng file JSON hay CSV vì các lý do sau đây:
+\begin{itemize}
+    \item CSV không thích hợp để chứa nội dung các bài báo, vốn gồm nhiều dấu phẩy (,) và dấu nháy kép (").
+    \item Việc cập nhật dữ liệu vào file JSON truyền thống gặp khó khăn lớn khi kích thước file tăng lên, do quy trình này thường đòi hỏi phải xử lý lại toàn bộ nội dung file để đảm bảo đúng cấu trúc cú pháp. 
+    \item Với SQLite, nhóm có thể thiết lập quy trình ghi dữ liệu liên tục theo từng lô nhỏ (5 bài một lần insert) để đảm bảo hiệu suất mà có thể tránh các rủi ro kỹ thuật (mất mạng, sập nguồn) làm mất data trong quá trình cào bài báo.
+    \item Việc dùng CSDL đã có ép kiểu (DATETIME) và đặt khoá chính từ trước sẽ giúp loại bỏ các dữ liệu trùng lặp hoặc gặp lỗi trong quá trình trích xuất, giúp làm giảm công việc cho khâu làm sạch.
+\end{itemize}
