@@ -82,7 +82,69 @@ Tuy nhiên, các mô hình có sự khác biệt đặc thù về cơ chế ho�
         \item \textbf{Tách từ (\textit{Word Segmentation}):} Tương tự như luồng cơ bản, văn bản đầu vào cho PhoBERT cũng cần dược tách từ để đồng bộ với dữ liệu mà PhoBERT đã được huấn luyện trước đó.
     \end{itemize}
 \end{itemize}
-Cuối cùng, các nhãn đầu ra phải được mã hoá và bộ dữ liệu phải được chia thành 3 tập (Train, Validation và Test). Mã hoá nhãn là bước ánh xạ các nhãn (gồm 7 nhãn cho ngữ cảnh của đồ án này) thành các con só nguyên (từ 0 tới 6 cho ngữ cảnh của đồ án này) để phục vụ quá trình tính toán của máy. Tập dữ liệu ban đầu được chia theo tỉ lệ 80\% Train, 10\% Validation, 10\% Test. Tuy nhiên việc chia dữ liệu cần đảm bảo việc mất cân bằng (không thể có quá nhiều nhãn "Thể thao" trong một tập dữ liệu như Train), vấn đề được giải quyết bằng kỹ thuật lấy mẫu phân tầng (\textit{Stratified Sampling}). Sau khi chia dữ liệu theo phương pháp lấy mẫu phân tầng (được cung cấp bởi tham số \texttt{stratify} trong \texttt{sklearn}), bước kiểm tra lại cho ra kết quả như bảng sau:
+Cuối cùng, các nhãn đầu ra phải được mã hoá bằng cách ánh xạ các nhãn (gồm 7 nhãn cho ngữ cảnh của đồ án này) thành các con só nguyên (từ 0 tới 6 cho ngữ cảnh của đồ án này) để phục vụ quá trình tính toán của máy.
+\subsection{Đảm bảo chất lượng dữ liệu}
+Để đảm bảo mô hình phân loại đạt hiệu suất cao và có khả năng tổng quát hoá tốt, bộ dữ liệu huấn luyện cần thoả mãn các tiêu chí:
+\begin{itemize}
+    \item \textbf{Tính đầy đủ:} Các mẫu dữ liệu không được khuyết thiếu các trường thông tin quan trọng.
+    \item \textbf{Tính sạch:} Dữ liệu văn bản không chứa các ký tự lạ, mã lỗi (HTML tags, JavaScript) hoặc các nội dung rác (quảng cáo hay link spam).
+    \item \textbf{Tính nhất quán:} Dữ liệu phải đồng nhất về định dạng (Unicode NFC), ngôn ngữ (tiếng Việt) và cách gán nhãn chủ đề.
+    \item \textbf{Tính cân bằng:} Số lượng mẫu dữ liệu giữa các nhãn không được chênh lệch quá lớn để tránh hiện tượng mô hình bị thiên vị (\textit{bias}) về phía lớp đa số.
+\end{itemize}
+Quy trình kiểm tra gồm 2 bước chính:
+\begin{itemize}
+    \item \textbf{Kiểm tra tự động (\textit{Automatic checks}):} Dựa trên các tiêu chí đã đề ra, xây dựng script để kiểm tra tự động quy trình EDA:
+    \begin{itemize}
+        \item \textbf{Kiểm tra giá trị rỗng:} Sử dụng \texttt{pandas} để quét toàn bộ DataFrame. Kết quả phát hiện 36 mẫu bị thiếu thông tin nghi là các quảng cáo, các mẫu đã được loại bỏ tự động.
+        \item \textbf{Kiểm tra trùng lặp:} Rà soát dựa trên đường dẫn và nội dung bài báo để đảm bảo tính duy nhất.
+        \item \textbf{Kiểm tra độ dài văn bản:} Tính toán độ dài ký tự của từng bài báo để phát hiện các bài quá ngắn hoặc quá dài.
+        \item \textbf{Kiểm tra phân bố nhãn:} Thống kê số lượng bài viết theo từng chủ đề. Kết quả cho thấy dữ liệu đạt độ cân bằng rất tốt, không cần áp dụng các kỹ thuật tái lấy mẫu (\textit{Resmapling}).
+    \end{itemize}
+    \item \textbf{Kiểm tra thủ công (\textit{Manual checks}):} Lấy ngẫu nhiên 5 bài viết từ các nhãn khác nhau. Đọc lướt nội dung để xác minh nhãn chủ đề ban đầu có khớp với nội dung thực tế không. Kết quả là dữ liệu đạt độ sạch hoàn hảo.
+\end{itemize}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\textwidth]{img/null_checks.png}
+  \captionsetup{width=0.6\textwidth}
+  \caption{Đầu ra của bước kiểm tra giá trị rỗng. Cho thấy có 36 giá trị rỗng ở 2 cột \texttt{publication\_date} và \texttt{title}.}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\textwidth]{img/duplication_checks.png}
+  \captionsetup{width=0.6\textwidth}
+  \caption{Đầu ra của bước kiểm tra trùng lặp. Cho thấy không có giá trị trùng lặp giữa các mẫu.}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{img/length_analysis.png}
+  \captionsetup{width=0.6\textwidth}
+  \caption{Biểu đồ thể hiện độ dài của các bài báo. Các bài báo trong tập dữ liệu có độ dài chủ yếu phân bố từ 3000-4000 từ.}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{img/tag_distribution.png}
+  \captionsetup{width=0.6\textwidth}
+  \caption{Biểu đồ thể hiện phân bố nhãn của tập dữ liệu. Cho thấy sự phân bố đều một cách lý tưởng.}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{img/code_check.png}
+  \captionsetup{width=0.6\textwidth}
+  \caption{Biểu đồ thể hiện việc các bài báo có chứa mã thực thi hay không. Cho thấy không hề có mã thực thi trong dữ liệu.}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{img/random_checks.png}
+  \captionsetup{width=0.6\textwidth}
+  \caption{Đầu ra của bước kiểm tra thủ công sau cùng. Chọn ngẫu nhiên một bài báo rồi hiện ra khoảng 300 từ đầu tiên trong bài báo. Kết quả cho thấy dữ liệu sau khi phân tích khám phá đã sạch sẽ.}
+\end{figure}
+\subsection{Lưu trữ và quản lý dữ liệu}
+Để đâm bảo khả năng tái lập (\textit{reproducibility}) và thuận tiện cho việc huấn luyện trên nhiều kiến trúc mô hình khác nhau, dữ liệu được quản lý theo quy trình 3 tầng:
+\begin{itemize}
+    \item \textbf{Dữ liệu trung gian:} Là dữ liệu sau bước phân tích khám phá, được lưu dưới dạng Pickle (\texttt{.pkl}) để giữ nguyên các thuộc tính đối tượng Python (như DataFrame) sau khi làm sạch sơ bộ, giúp tiết kiệm thời gian tải dữ liệu của quá trình kế tiếp.
+    \item \textbf{Dữ liệu huấn luyện:} Được chia tách và lưu trữ dưới dạng CSV trong các thư mục riêng biệt, sẵn sàng nạp vào mô hình.
+\end{itemize}
+Tập dữ liệu sau cùng sẽ được phân tách thành 3 tập riêng biệt là Train, Validation và Test với tỉ lệ 80\%-10\%-10\%. Tuy nhiên cần áp dụng kỹ thuật lấy mẫu phân tầng (\textit{Stratified Sampling}) để đảm bảo phân bố đều các nhãn ra các tập dữ liệu. Dưới đây là bảng phân bố các nhãn:
 \begin{table}[H]
 \centering
 \begin{tabular}{|c|l|l|l|}
