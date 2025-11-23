@@ -1,2 +1,177 @@
 \pagebreak
 \section{Phân tích khám phá dữ liệu}
+\subsection{Thống kê mô tả}
+
+\subsubsection{Quy mô và cấu trúc dữ liệu}
+Tập dữ liệu ban đầu sau khi thu thập gồm \textbf{20,813} bài báo với 6 thuộc tính gốc: \texttt{link}, \texttt{publication\_date}, \texttt{title}, \texttt{content}, \texttt{main\_tag}, \texttt{source}. Sau bước loại bỏ dữ liệu thiếu quan trọng, tập dữ liệu còn lại là \textbf{20,777} bài báo. Trong quá trình EDA, nhóm bổ sung thêm một thuộc tính số là \texttt{content\_length} (độ dài văn bản) để phục vụ thống kê, do đó DataFrame cuối cùng có tổng cộng 7 cột.
+
+\subsubsection{Tỉ lệ dữ liệu thiếu}
+Kiểm tra giá trị rỗng được thực hiện trên toàn bộ DataFrame. Kết quả cho thấy có \textbf{36} mẫu bị thiếu dữ liệu ở hai trường \texttt{publication\_date} và \texttt{title} ở tập dữ liệu thô. Các mẫu này nghi là quảng cáo hoặc bài lỗi crawl nên đã được loại bỏ tự động. Sau làm sạch, tập dữ liệu dùng cho huấn luyện không còn giá trị rỗng.
+
+\subsubsection{Thống kê cơ bản cho các biến số mô tả}
+Do dữ liệu là văn bản phi cấu trúc, nhóm xây dựng các biến số mô tả độ dài gồm:
+\texttt{content\_length} (độ dài nội dung theo ký tự), \texttt{content\_words} (độ dài theo số từ),
+và các biến tương tự cho tiêu đề.
+Các thống kê cơ bản (mean, median, variance, min/max và IQR) được tính bằng \texttt{describe()} và \texttt{quantile()}.
+
+\begin{table}[ht]
+\centering
+\caption{Bảng thống kê cơ bản}
+\label{tab:desc_stats_lengths}
+\begin{tabular}{lrrrrrrrr}
+\hline
+\textbf{Biến} & \textbf{Count} & \textbf{Mean} & \textbf{Std} & \textbf{Min} & \textbf{25\%} & \textbf{50\%} & \textbf{75\%} & \textbf{Max} \\
+\hline
+title\_length   & 20777 & 63.06   & 14.88   & 9    & 53   & 64   & 73   & 164 \\
+content\_length & 20777 & 3525.38 & 2106.83 & 104  & 2208 & 2988 & 4242 & 61863 \\
+title\_words    & 20777 & 13.97   & 3.11    & 2    & 12   & 14   & 16   & 34 \\
+content\_words  & 20777 & 768.37  & 460.55  & 24   & 480  & 651  & 927  & 13592 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{IQR cho các biến số}
+\label{tab:sample_features}
+\begin{tabular}{lr}
+\hline
+\textbf{Đặc trưng} & \textbf{Giá trị} \\
+\hline
+title\_length   & 20 \\
+content\_length & 2034 \\
+title\_words    & 4 \\
+content\_words  & 447 \\
+\hline
+\end{tabular}
+\end{table}
+
+
+
+\subsubsection{Phân bố dữ liệu theo từng thuộc tính}
+Phân bố độ dài nội dung được biểu diễn bằng đồ thị KDE/Histogram và Boxplot, cho thấy dữ liệu không có hiện tượng lệch quá mạnh hay nhiễu bất thường. Ngoài ra, dữ liệu được thu thập từ cùng một nguồn báo (\texttt{source} = Thanh Niên), đảm bảo tính nhất quán về phong cách và ngôn ngữ.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{img/len_content.png}
+    \caption{Phân bố độ dài nội dung bài viết}
+\end{figure}
+
+\subsection{Phân tích phân bố nhãn}
+
+\subsubsection{Tỉ lệ nhãn theo chủ đề}
+Tập dữ liệu gồm 7 nhãn chính: \textit{Thể thao, Thời sự, Chính trị, Kinh tế, Giáo dục, Sức khoẻ, Thế giới}. Nhìn vào biểu đồ và bảng phân bố nhãn cho thấy số lượng mẫu giữa các nhãn được phân bổ rất đều.
+
+\begin{table}[H]
+\centering
+\caption{Bảng tỉ lệ phân bố nhãn}
+\label{tab:category_means}
+\begin{tabular}{lr}
+\hline
+\textbf{Chuyên mục} & \textbf{Giá trị} \\
+\hline
+Thể thao   & 14.593 \\
+Thế giới   & 14.386 \\
+Giáo dục   & 14.376 \\
+Kinh tế    & 14.314 \\
+Chính trị  & 14.242 \\
+Sức khỏe   & 14.213 \\
+Thời sự    & 13.876 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{img/label_distribute.png}
+    \caption{Biểu đồ phân phối nhãn}
+\end{figure}
+
+
+\subsubsection{Đánh giá mất cân bằng lớp}
+Với phân bố nhãn đồng đều như trên, tập dữ liệu \textbf{không gặp vấn đề mất cân bằng lớp (\textit{class imbalance})}. Do đó, nhóm không cần áp dụng các kỹ thuật tái lấy mẫu (\textit{oversampling/undersampling}) và có thể huấn luyện mô hình trực tiếp trên phân phối hiện tại. Trong đánh giá, nhóm vẫn ưu tiên sử dụng Macro-F1 nhằm đảm bảo chất lượng trên tất cả các nhãn.
+
+\subsection{Phân tích mối quan hệ giữa các thuộc tính}
+Nhóm xem xét mối liên hệ giữa các thuộc tính mô tả độ dài (như \texttt{content\_length}, \texttt{content\_words}, \texttt{title\_length}, \texttt{title\_words}). Ma trận tương quan cho thấy các biến đo độ dài nội dung có tương quan cao với nhau, trong khi độ dài tiêu đề chỉ tương quan yếu với độ dài nội dung. Điều này phù hợp với trực giác: bài càng dài thì số từ càng nhiều, nhưng tiêu đề không phản ánh trực tiếp độ dài bài báo.
+
+
+\subsection{Phân tích mối quan hệ giữa các thuộc tính}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{img/len_content_Boxplot.png}
+    \caption{Phân bố độ dài nội dung bài viết}
+\end{figure}
+
+\textit{Biểu đồ Histogram} cho thấy độ dài nội dung bài viết có phân bố lệch trái mạnh. Phần lớn bài báo có độ dài từ khoảng 1.000 đến 6.000 ký tự, trong khi một số ít bài có độ dài rất lớn (lên tới hơn 60.000 ký tự), tạo ra các \textit{giá trị ngoại lệ} (outliers). Điều này phản ánh sự đa dạng về cấu trúc bài viết, từ các bản tin ngắn đến các bài phân tích chuyên sâu.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{img/quality_title_len_distribution.png}
+    \caption{Phân bố độ dài tiêu đề}
+\end{figure}
+
+Độ dài tiêu đề có phân bố gần giống chuẩn, tập trung chủ yếu trong khoảng 50 đến 75 ký tự. Điều này cho thấy các bài báo thường được tối ưu hoá tiêu đề để vừa ngắn gọn, vừa truyền tải đủ thông tin với một số ít tiêu đề có độ dài cực lớn hoặc cực nhỏ xuất hiện như các trường hợp ngoại lệ.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{img/rel_articles_per_day.png}
+    \caption{Số lượng bài viết theo ngày}
+\end{figure}
+Do dữ liệu được crawl chủ yếu trong các tháng gần đây nên số lượng bài viết tập trung trong nửa cuối năm 2025.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{img/rel_articles_per_hour.png}
+    \caption{Số lượng bài viết theo giờ trong ngày}
+\end{figure}
+Biểu đồ cho thấy các bài báo chủ yếu được xuất bản trong khoảng 5h–23h hằng ngày.
+– Khung 8h–11h là thời điểm có lượng bài cao nhất (đỉnh khoảng 1.400–1.500 bài).
+– Tối từ 16h–20h cũng có lượng bài cao.
+– Giờ khuya (0h–3h) có số bài rất ít.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{img/rel_source_main_tag_heatmap.png}
+    \caption{Heatmap số lượng bài theo Source và Main Tag}
+\end{figure}
+Vì toàn bộ dữ liệu đều đến từ một nguồn (“Thanh Niên”), \textit{heatmap} cho thấy số bài giữa các main\_tag khá đồng đều: mỗi nhóm có khoảng 2.900–3.000 bài viết. Điều này chứng tỏ bộ dữ liệu được thu thập tương đối cân bằng theo từng chủ đề.
+
+\subsection{Kiểm tra chất lượng dữ liệu}
+Qua phân tích phân bố:
+– Cả tiêu đề và nội dung đều có phân bố hợp lý, không có dấu hiệu lỗi mã hóa.
+– Tuy nhiên, một số bài có nội dung quá dài (60.000+ ký tự), đây có thể là bài dạng phỏng vấn hoặc tổng hợp nhiều đoạn, nhưng cũng có thể là lỗi trùng lặp hoặc gộp nội dung.
+– Không thấy hiện tượng tiêu đề rỗng hoặc content rỗng qua biểu đồ.
+
+Biểu đồ phân bố theo ngày cho thấy dữ liệu lịch sử trước năm 2023 gần như không có, nhưng đây không phải lỗi mà là đặc điểm của nguồn dữ liệu (crawler chỉ hoạt động trong một số năm gần đây).
+
+\subsection{EDA cho dữ liệu phi cấu trúc}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{img/text_avg_content_len_by_main_tag.png}
+    \caption{Độ dài trung bình nội dung theo Main Tag}
+\end{figure}
+Chính trị và Kinh tế có độ dài ~4200 ký tự, cao nhất; Thế giới thấp nhất (~2700 ký tự).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{img/text_rel_sentences_contentlen.png}
+    \caption{Quan hệ giữa số câu và độ dài nội dung}
+\end{figure}
+
+\textit{Scatterplot} cho thấy mối quan hệ tuyến tính mạnh giữa số câu và độ dài nội dung: bài viết dài thường có số câu nhiều tương ứng. Phần lớn bài nằm dưới 150 câu, tuy nhiên có một số trường hợp đặc biệt lên đến 300–400 câu.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{img/text_top_30_words.png}
+    \caption{Top 30 từ xuất hiện nhiều nhất sau khi lọc stopwords}
+\end{figure}
+Các từ xuất hiện nhiều nhất gồm: “công”, “không”, “học”, “chính”, “đồng”, “quốc”, “thể”, “trường”…
+Các từ này chủ yếu là danh từ hoặc các từ mang nghĩa nội dung quan trọng, phản ánh tính chất báo chí của tập dữ liệu. Tần suất từ cao (40.000–100.000 lần) chứng tỏ bộ dữ liệu rất lớn và có sự lặp lại của nhiều chủ đề tương đồng.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\linewidth]{img/rel_content_len_by_main_tag.png}
+    \caption{Độ dài nội dung theo Main Tag}
+\end{figure}
+Nhóm Chính trị và Kinh tế có độ dài trung bình cao nhất (khoảng trên 4.200 ký tự), tiếp theo là Giáo dục. Các nhóm Sức khoẻ, Thế giới, Thể thao, Thời sự có độ dài trung bình thấp hơn đáng kể (~2.700–3.200 ký tự). Điều này phù hợp với thực tế: các bài phân tích sâu thường thuộc nhóm Chính trị–Kinh tế.
