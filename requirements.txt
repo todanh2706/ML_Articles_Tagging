@@ -4,3 +4,4 @@ seaborn
 beautifulsoup4
 pyvi
 scikit-learn
+fasttext
