@@ -10,3 +10,4 @@ figures
 dataset
 .venv
 fasttext_data
+final_bert_model
