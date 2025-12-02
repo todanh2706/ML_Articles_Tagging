@@ -163,22 +163,50 @@ print(f"- {TEST_TXT}")
 # ================================
 # 6. TRAIN FASTTEXT
 # ================================
-print("\n🚀 Bắt đầu train FastText...")
+# print("\n🚀 Bắt đầu train FastText...")
+
+# model = fasttext.train_supervised(
+#     input=TRAIN_TXT,
+#     lr=0.3,
+#     epoch=25,
+#     dim=150,
+#     wordNgrams=2,
+#     loss="hs",   # single-label classification loss="softmax"
+#     minn=2,
+#     maxn=5,
+#     verbose=2
+# )
+
+# model.save_model(MODEL_PATH)
+# print(f"\n🎉 Đã lưu model: {MODEL_PATH}")
+
+print("\n🚀 Bắt đầu train FastText bằng AUTO-TUNE...")
 
 model = fasttext.train_supervised(
     input=TRAIN_TXT,
-    lr=0.3,
-    epoch=25,
-    dim=150,
-    wordNgrams=2,
-    loss="softmax",   # single-label classification
-    minn=2,
-    maxn=5,
+    autotuneValidationFile=VALID_TXT,
+    autotuneDuration=600,     # 10 phút
     verbose=2
 )
 
 model.save_model(MODEL_PATH)
-print(f"\n🎉 Đã lưu model: {MODEL_PATH}")
+print(f"🎉 Đã lưu model autotuned tại: {MODEL_PATH}")
+
+# ============================
+# Quantization (optional)
+# ============================
+print("\n⚡ Đang quantize model...")
+
+model_quant = fasttext.train_supervised(
+    input=TRAIN_TXT,
+    autotuneValidationFile=VALID_TXT,
+    autotuneDuration=600,     # 10 phút
+    verbose=2,
+    autotuneModelSize="20M"
+)
+
+model_quant.save_model("fasttext_data/news_main_tag_quant.bin")
+print("🎉 Đã lưu model quantized: news_main_tag_quant.bin")
 
 # ================================
 # 7. ĐÁNH GIÁ NHANH BẰNG FASTTEXT API
