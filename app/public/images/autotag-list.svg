@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="360" viewBox="0 0 720 360" fill="none">
+  <rect width="720" height="360" fill="#F8FAFC"/>
+  <text x="28" y="40" fill="#0F172A" font-family="Inter, Arial" font-size="20" font-weight="700">Gắn tag tự động (demo)</text>
+  <text x="28" y="64" fill="#475569" font-family="Inter, Arial" font-size="14">Danh sách bài báo đã crawl + tag dự đoán</text>
+
+  <g transform="translate(28 84)">
+    <rect x="0" y="0" width="210" height="92" rx="12" fill="#FFFFFF" stroke="#E2E8F0"/>
+    <text x="16" y="26" fill="#0F172A" font-family="Inter, Arial" font-size="14" font-weight="700">Chinh tri</text>
+    <text x="16" y="48" fill="#475569" font-family="Inter, Arial" font-size="12">Bài báo 1 về nghị quyết...</text>
+    <text x="16" y="68" fill="#94A3B8" font-family="Inter, Arial" font-size="11">2 giờ trước • Thanh Nien</text>
+    <rect x="144" y="18" width="52" height="22" rx="11" fill="#EEF2FF"/>
+    <text x="152" y="34" fill="#4F46E5" font-family="Inter, Arial" font-size="11" font-weight="700">Chinh tri</text>
+  </g>
+
+  <g transform="translate(254 84)">
+    <rect x="0" y="0" width="210" height="92" rx="12" fill="#FFFFFF" stroke="#E2E8F0"/>
+    <text x="16" y="26" fill="#0F172A" font-family="Inter, Arial" font-size="14" font-weight="700">Giai tri</text>
+    <text x="16" y="48" fill="#475569" font-family="Inter, Arial" font-size="12">Showbiz tuần qua: nhiều sự kiện...</text>
+    <text x="16" y="68" fill="#94A3B8" font-family="Inter, Arial" font-size="11">5 giờ trước • Thanh Nien</text>
+    <rect x="144" y="18" width="52" height="22" rx="11" fill="#FEF3C7"/>
+    <text x="152" y="34" fill="#EA580C" font-family="Inter, Arial" font-size="11" font-weight="700">Giai tri</text>
+  </g>
+
+  <g transform="translate(480 84)">
+    <rect x="0" y="0" width="210" height="92" rx="12" fill="#FFFFFF" stroke="#E2E8F0"/>
+    <text x="16" y="26" fill="#0F172A" font-family="Inter, Arial" font-size="14" font-weight="700">Cong nghe</text>
+    <text x="16" y="48" fill="#475569" font-family="Inter, Arial" font-size="12">Ra mắt thiết bị mới, AI hỗ trợ...</text>
+    <text x="16" y="68" fill="#94A3B8" font-family="Inter, Arial" font-size="11">8 giờ trước • Thanh Nien</text>
+    <rect x="136" y="18" width="60" height="22" rx="11" fill="#D1FAE5"/>
+    <text x="142" y="34" fill="#059669" font-family="Inter, Arial" font-size="11" font-weight="700">Cong nghe</text>
+  </g>
+
+  <g transform="translate(28 196)">
+    <text x="0" y="0" fill="#334155" font-family="Inter, Arial" font-size="13" font-weight="700">Thanh Nien article 4</text>
+    <text x="0" y="20" fill="#475569" font-family="Inter, Arial" font-size="12">Snippet: Đoạn tóm tắt ngắn cho bài báo liên quan...</text>
+    <text x="0" y="40" fill="#94A3B8" font-family="Inter, Arial" font-size="11">published 12 giờ trước</text>
+    <rect x="178" y="-12" width="60" height="22" rx="11" fill="#D1FAE5"/>
+    <text x="186" y="4" fill="#059669" font-family="Inter, Arial" font-size="11" font-weight="700">The thao</text>
+  </g>
+
+  <g transform="translate(28 244)">
+    <text x="0" y="0" fill="#334155" font-family="Inter, Arial" font-size="13" font-weight="700">Thanh Nien article 5</text>
+    <text x="0" y="20" fill="#475569" font-family="Inter, Arial" font-size="12">Snippet: Tình hình kinh tế vĩ mô tuần này...</text>
+    <text x="0" y="40" fill="#94A3B8" font-family="Inter, Arial" font-size="11">published 16 giờ trước</text>
+    <rect x="190" y="-12" width="52" height="22" rx="11" fill="#EEF2FF"/>
+    <text x="198" y="4" fill="#4F46E5" font-family="Inter, Arial" font-size="11" font-weight="700">Kinh te</text>
+  </g>
+
+  <g transform="translate(28 292)">
+    <text x="0" y="0" fill="#334155" font-family="Inter, Arial" font-size="13" font-weight="700">Thanh Nien article 6</text>
+    <text x="0" y="20" fill="#475569" font-family="Inter, Arial" font-size="12">Snippet: Sự kiện giáo dục nổi bật...</text>
+    <text x="0" y="40" fill="#94A3B8" font-family="Inter, Arial" font-size="11">published 1 ngày trước</text>
+    <rect x="190" y="-12" width="60" height="22" rx="11" fill="#E0F2FE"/>
+    <text x="196" y="4" fill="#0284C7" font-family="Inter, Arial" font-size="11" font-weight="700">Giao duc</text>
+  </g>
+</svg>

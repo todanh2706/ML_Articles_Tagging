@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="360" viewBox="0 0 720 360" fill="none">
+  <rect width="720" height="360" fill="#F8FAFC"/>
+  <text x="28" y="40" fill="#0F172A" font-family="Inter, Arial" font-size="20" font-weight="700">So sánh hiệu suất (demo)</text>
+  <text x="28" y="64" fill="#475569" font-family="Inter, Arial" font-size="14">Accuracy / Precision / Recall / F1 cho 3 model</text>
+
+  <g transform="translate(28 88)">
+    <rect x="0" y="0" width="210" height="110" rx="12" fill="#FFFFFF" stroke="#E2E8F0"/>
+    <text x="16" y="28" fill="#334155" font-family="Inter, Arial" font-size="13" font-weight="700">Model 1</text>
+    <text x="16" y="52" fill="#0F172A" font-family="Inter, Arial" font-size="20" font-weight="700">0.854</text>
+    <text x="16" y="72" fill="#64748B" font-family="Inter, Arial" font-size="12">Accuracy</text>
+    <text x="16" y="92" fill="#475569" font-family="Inter, Arial" font-size="12">P 0.81 • R 0.82 • F1 0.815</text>
+  </g>
+
+  <g transform="translate(254 88)">
+    <rect x="0" y="0" width="210" height="110" rx="12" fill="#FFFFFF" stroke="#E2E8F0"/>
+    <text x="16" y="28" fill="#334155" font-family="Inter, Arial" font-size="13" font-weight="700">Model 2</text>
+    <text x="16" y="52" fill="#0F172A" font-family="Inter, Arial" font-size="20" font-weight="700">0.912</text>
+    <text x="16" y="72" fill="#64748B" font-family="Inter, Arial" font-size="12">Accuracy</text>
+    <text x="16" y="92" fill="#475569" font-family="Inter, Arial" font-size="12">P 0.90 • R 0.91 • F1 0.905</text>
+  </g>
+
+  <g transform="translate(480 88)">
+    <rect x="0" y="0" width="210" height="110" rx="12" fill="#FFFFFF" stroke="#E2E8F0"/>
+    <text x="16" y="28" fill="#334155" font-family="Inter, Arial" font-size="13" font-weight="700">Model 3</text>
+    <text x="16" y="52" fill="#0F172A" font-family="Inter, Arial" font-size="20" font-weight="700">0.930</text>
+    <text x="16" y="72" fill="#64748B" font-family="Inter, Arial" font-size="12">Accuracy</text>
+    <text x="16" y="92" fill="#475569" font-family="Inter, Arial" font-size="12">P 0.92 • R 0.93 • F1 0.925</text>
+  </g>
+
+  <g transform="translate(28 216)">
+    <text x="0" y="0" fill="#334155" font-family="Inter, Arial" font-size="13" font-weight="700">Mẫu bảng chi tiết</text>
+    <rect x="0" y="10" width="662" height="118" rx="12" fill="#FFFFFF" stroke="#E2E8F0"/>
+    <text x="16" y="34" fill="#475569" font-family="Inter, Arial" font-size="12" font-weight="700">ID</text>
+    <text x="70" y="34" fill="#475569" font-family="Inter, Arial" font-size="12" font-weight="700">Tiêu đề</text>
+    <text x="300" y="34" fill="#475569" font-family="Inter, Arial" font-size="12" font-weight="700">True</text>
+    <text x="360" y="34" fill="#475569" font-family="Inter, Arial" font-size="12" font-weight="700">M1</text>
+    <text x="420" y="34" fill="#475569" font-family="Inter, Arial" font-size="12" font-weight="700">M2</text>
+    <text x="480" y="34" fill="#475569" font-family="Inter, Arial" font-size="12" font-weight="700">M3</text>
+    <text x="540" y="34" fill="#475569" font-family="Inter, Arial" font-size="12" font-weight="700">Đúng/Sai</text>
+
+    <text x="16" y="58" fill="#0F172A" font-family="Inter, Arial" font-size="12">1</text>
+    <text x="70" y="58" fill="#0F172A" font-family="Inter, Arial" font-size="12">Bài báo mẫu 1</text>
+    <text x="300" y="58" fill="#0F172A" font-family="Inter, Arial" font-size="12">Chinh tri</text>
+    <text x="360" y="58" fill="#0F172A" font-family="Inter, Arial" font-size="12">Chinh tri</text>
+    <text x="420" y="58" fill="#0F172A" font-family="Inter, Arial" font-size="12">Chinh tri</text>
+    <text x="480" y="58" fill="#0F172A" font-family="Inter, Arial" font-size="12">Kinh te</text>
+    <text x="540" y="58" fill="#16A34A" font-family="Inter, Arial" font-size="12" font-weight="700">M1 ✓ M2 ✓ M3 ✗</text>
+
+    <text x="16" y="82" fill="#0F172A" font-family="Inter, Arial" font-size="12">2</text>
+    <text x="70" y="82" fill="#0F172A" font-family="Inter, Arial" font-size="12">Bài báo mẫu 2</text>
+    <text x="300" y="82" fill="#0F172A" font-family="Inter, Arial" font-size="12">Giai tri</text>
+    <text x="360" y="82" fill="#0F172A" font-family="Inter, Arial" font-size="12">Giai tri</text>
+    <text x="420" y="82" fill="#0F172A" font-family="Inter, Arial" font-size="12">The thao</text>
+    <text x="480" y="82" fill="#0F172A" font-family="Inter, Arial" font-size="12">Giai tri</text>
+    <text x="540" y="82" fill="#16A34A" font-family="Inter, Arial" font-size="12" font-weight="700">M1 ✓ M2 ✗ M3 ✓</text>
+
+    <text x="16" y="106" fill="#0F172A" font-family="Inter, Arial" font-size="12">3</text>
+    <text x="70" y="106" fill="#0F172A" font-family="Inter, Arial" font-size="12">Bài báo mẫu 3</text>
+    <text x="300" y="106" fill="#0F172A" font-family="Inter, Arial" font-size="12">Kinh te</text>
+    <text x="360" y="106" fill="#0F172A" font-family="Inter, Arial" font-size="12">Kinh te</text>
+    <text x="420" y="106" fill="#0F172A" font-family="Inter, Arial" font-size="12">Kinh te</text>
+    <text x="480" y="106" fill="#0F172A" font-family="Inter, Arial" font-size="12">Kinh te</text>
+    <text x="540" y="106" fill="#16A34A" font-family="Inter, Arial" font-size="12" font-weight="700">M1 ✓ M2 ✓ M3 ✓</text>
+  </g>
+</svg>

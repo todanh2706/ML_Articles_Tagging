@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  express:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - PORT=3000
+      - FLASK_BASE_URL=http://flask:5001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - flask
+
+  flask:
+    build:
+      context: ./flask
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
