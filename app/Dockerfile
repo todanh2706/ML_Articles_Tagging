@@ -13,8 +13,6 @@ COPY routes ./routes
 COPY views ./views
 COPY public ./public
 
-RUN npm run build:css
-
 ENV PORT=3000
 EXPOSE 3000
 

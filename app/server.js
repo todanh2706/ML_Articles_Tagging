@@ -44,7 +44,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (_req, res) => res.redirect('/experiment'));
-app.get('/home', (_req, res) => res.redirect('/experiment'));
 app.use('/experiment', experimentRoutes);
 app.use('/compare', compareRoutes);
 app.use('/autotag', autotagRoutes);
