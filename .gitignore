@@ -13,3 +13,8 @@ fasttext_data
 final_bert_model
 node_modules/
 template/
+*.zip
+*.json
+*.joblib
+*.bin
+phobert/

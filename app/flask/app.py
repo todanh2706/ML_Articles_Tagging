@@ -2,24 +2,79 @@ from datetime import datetime, timedelta
 import csv
 import io
 import random
+from typing import Dict, List
+
 from flask import Flask, request, jsonify
+
+from models import load_models, normalize_label
 
 app = Flask(__name__)
 
 TAGS = ["chinh-tri", "kinh-te", "giao-duc", "the-thao", "giai-tri", "cong-nghe", "doi-song"]
-MODEL_NAMES = ["Model 1", "Model 2", "Model 3"]
 
 
 def random_softmax():
     scores = {tag: random.random() for tag in TAGS}
     total = sum(scores.values()) or 1.0
-    return {tag: round(value / total, 3) for tag, value in scores.items()}
+    return {tag: round(value / total, 6) for tag, value in scores.items()}
+
+
+class StubModel:
+    name = "Stub"
+
+    def predict(self, text: str):
+        return predict_stub(text)
 
 
 def predict_stub(text: str):
     softmax = random_softmax()
     predicted_tag = max(softmax, key=softmax.get)
     return {"predicted_tag": predicted_tag, "softmax": softmax}
+
+
+MODELS = load_models()
+if not MODELS:
+    MODELS = [StubModel()]
+
+
+def normalize_tag(tag: str) -> str:
+    return normalize_label(tag)
+
+
+def format_prediction(model, text: str) -> Dict:
+    try:
+        raw = model.predict(text)
+        predicted_tag = raw.predicted_tag if hasattr(raw, "predicted_tag") else raw.get("predicted_tag")
+        softmax = raw.softmax if hasattr(raw, "softmax") else raw.get("softmax", raw.get("probs", {}))
+        return {"name": model.name, "predicted_tag": predicted_tag, "softmax": softmax}
+    except Exception as exc:  # pragma: no cover - defensive for runtime issues
+        return {"name": model.name, "predicted_tag": None, "softmax": {}, "error": str(exc)}
+
+
+def predict_with_models(text: str) -> List[Dict]:
+    return [format_prediction(model, text) for model in MODELS]
+
+
+def get_true_prob(probs: Dict, true_tag: str) -> float:
+    target = normalize_tag(true_tag)
+    for label, value in (probs or {}).items():
+        if normalize_tag(label) == target:
+            try:
+                return float(value)
+            except Exception:
+                return 0.0
+    return 0.0
+
+
+def annotate_with_truth(pred: Dict, true_tag: str) -> Dict:
+    pred_tag = normalize_tag(pred.get("predicted_tag"))
+    true_tag_norm = normalize_tag(true_tag)
+    prob = get_true_prob(pred.get("softmax", {}), true_tag)
+    return {
+        **pred,
+        "true_tag_prob": prob,
+        "correct": pred_tag == true_tag_norm,
+    }
 
 
 def ensure_text_payload():
@@ -35,12 +90,8 @@ def predict_text():
     text, error_resp, status = ensure_text_payload()
     if error_resp:
         return error_resp, status
-
-    models = []
-    for name in MODEL_NAMES:
-        pred = predict_stub(text)
-        models.append({"name": name, **pred})
-    return jsonify({"models": models})
+    preds = predict_with_models(text)
+    return jsonify({"models": preds})
 
 
 @app.post("/predict/url")
@@ -52,10 +103,7 @@ def predict_url():
 
     # In real life: download and extract article text. Here we stub.
     fake_text = f"Stub content fetched from {url}"
-    models = []
-    for name in MODEL_NAMES:
-        pred = predict_stub(fake_text)
-        models.append({"name": name, **pred})
+    models = predict_with_models(fake_text)
 
     return jsonify({
         "title": f"Fetched article from {url}",
@@ -74,13 +122,13 @@ def predict_csv():
     stream = io.StringIO(file.stream.read().decode("utf-8"))
     reader = csv.DictReader(stream)
     for idx, row in enumerate(reader, start=1):
-        preds = [predict_stub(row.get("content") or row.get("text") or "") for _ in MODEL_NAMES]
+        text = row.get("content") or row.get("text") or ""
+        preds = predict_with_models(text)
         rows.append({
             "id": row.get("id") or idx,
             "title": row.get("title") or f"Row {idx}",
-            "model1_tag": preds[0]["predicted_tag"],
-            "model2_tag": preds[1]["predicted_tag"],
-            "model3_tag": preds[2]["predicted_tag"],
+            "models": preds,
+            "predicted_tags": {p["name"]: p.get("predicted_tag") for p in preds},
         })
 
     return jsonify({"rows": rows})
@@ -93,31 +141,28 @@ def evaluate_text():
     true_tag = data.get("true_tag")
     if not text or not true_tag:
         return jsonify({"error": "text and true_tag are required"}), 400
-
-    models = []
-    for name in MODEL_NAMES:
-        pred = predict_stub(text)
-        true_prob = pred["softmax"].get(true_tag, 0)
-        models.append({
-            "name": name,
-            "predicted_tag": pred["predicted_tag"],
-            "true_tag_prob": true_prob,
-            "correct": pred["predicted_tag"] == true_tag,
-        })
-    return jsonify({"models": models})
+    preds = [annotate_with_truth(pred, true_tag) for pred in predict_with_models(text)]
+    return jsonify({"models": preds})
 
 
-def compute_summary(rows, key):
-    total = len(rows) or 1
-    correct = sum(1 for r in rows if r.get(f"{key}_correct"))
-    accuracy = round(correct / total, 3)
-    # Placeholder: using accuracy for precision/recall/F1 in stub mode.
-    return {
-        "accuracy": accuracy,
-        "precision": accuracy,
-        "recall": accuracy,
-        "f1": accuracy,
-    }
+def compute_summary(rows):
+    summary = {}
+    for model in MODELS:
+        preds = []
+        for row in rows:
+            for pred in row.get("models", []):
+                if pred.get("name") == model.name:
+                    preds.append(pred)
+        total = len(preds) or 1
+        correct = sum(1 for p in preds if p.get("correct"))
+        accuracy = round(correct / total, 3)
+        summary[model.name] = {
+            "accuracy": accuracy,
+            "precision": accuracy,
+            "recall": accuracy,
+            "f1": accuracy,
+        }
+    return summary
 
 
 @app.post("/evaluate/csv")
@@ -132,25 +177,17 @@ def evaluate_csv():
     for idx, row in enumerate(reader, start=1):
         text = row.get("content") or row.get("text") or ""
         true_tag = row.get("true_tag") or row.get("label") or ""
-        preds = [predict_stub(text) for _ in MODEL_NAMES]
+        preds = [annotate_with_truth(pred, true_tag) for pred in predict_with_models(text)]
         row_result = {
             "id": row.get("id") or idx,
             "title": row.get("title") or f"Row {idx}",
             "true_tag": true_tag,
-            "model1_tag": preds[0]["predicted_tag"],
-            "model2_tag": preds[1]["predicted_tag"],
-            "model3_tag": preds[2]["predicted_tag"],
-            "model1_correct": preds[0]["predicted_tag"] == true_tag,
-            "model2_correct": preds[1]["predicted_tag"] == true_tag,
-            "model3_correct": preds[2]["predicted_tag"] == true_tag,
+            "models": preds,
+            "predicted_tags": {p["name"]: p.get("predicted_tag") for p in preds},
         }
         rows.append(row_result)
 
-    summary = {
-        "model1": compute_summary(rows, "model1"),
-        "model2": compute_summary(rows, "model2"),
-        "model3": compute_summary(rows, "model3"),
-    }
+    summary = compute_summary(rows)
     return jsonify({"summary": summary, "rows": rows})
 
 
@@ -163,15 +200,20 @@ def crawl_tag():
     articles = []
     now = datetime.utcnow()
     for i in range(6):
-        pred = predict_stub(f"stub for {tag}")
+        preds = predict_with_models(f"stub for {tag}")
+        top_pred = preds[0] if preds else {}
+        softmax = top_pred.get("softmax") or {}
+        confidence = max(softmax.values()) if softmax else 0.0
         articles.append({
             "title": f"Thanh Nien article {i + 1} ve {tag}",
             "snippet": f"Doan tom tat ngan cho bai bao {i + 1} lien quan den {tag}.",
             "url": f"https://thanhnien.vn/{tag}/bai-{i + 1}.html",
             "source": "Thanh Nien",
             "published_at": (now - timedelta(hours=i * 2)).isoformat(),
-            "predicted_tag": pred["predicted_tag"],
-            "confidence": max(pred["softmax"].values()),
+            "predicted_tag": top_pred.get("predicted_tag"),
+            "model": top_pred.get("name"),
+            "confidence": confidence,
+            "models": preds,
         })
 
     return jsonify({"articles": articles})

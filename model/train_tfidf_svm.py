@@ -1,3 +1,7 @@
+import json
+from pathlib import Path
+
+import joblib
 import pandas as pd
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -93,6 +97,35 @@ def main():
     print("TEST accuracy:", accuracy_score(test_labels, test_pred))
     print("TEST f1_macro:", f1_score(test_labels, test_pred, average="macro"))
     print(classification_report(test_labels, test_pred))
+
+    # 8) Save artifacts for inference
+    artifacts_dir = Path(__file__).resolve().parent / "artifacts"
+    artifacts_dir.mkdir(parents=True, exist_ok=True)
+
+    model_path = artifacts_dir / "tfidf_svm.joblib"
+    joblib.dump(best_model, model_path)
+    print(f"Saved pipeline to {model_path}")
+
+    # Persist label names if available so the Flask app can present readable tags
+    label_name_col = None
+    for candidate in ("main_tag", "label", "label_text"):
+        if candidate in y_train.columns:
+            label_name_col = candidate
+            break
+
+    label_names = {}
+    if label_name_col:
+        combined_labels = pd.concat([y_train, y_val, y_test], axis=0, ignore_index=True)
+        merged = combined_labels[[LABEL_COL, label_name_col]].dropna().drop_duplicates(subset=[LABEL_COL])
+        label_names = {str(row[LABEL_COL]): str(row[label_name_col]) for _, row in merged.iterrows()}
+
+    label_info = {
+        "classes": [str(cls) for cls in best_model.classes_],
+        "label_names": label_names,
+    }
+    labels_path = artifacts_dir / "tfidf_svm_labels.json"
+    labels_path.write_text(json.dumps(label_info, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"Saved label metadata to {labels_path}")
 
 if __name__ == "__main__":
     main()

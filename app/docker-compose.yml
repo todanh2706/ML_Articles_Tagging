@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    init: true
     environment:
       - PORT=3000
       - FLASK_BASE_URL=http://flask:5001
@@ -10,10 +11,23 @@ services:
       - "3000:3000"
     depends_on:
       - flask
+    command: npm run dev
+    volumes:
+      - ./routes:/usr/src/app/routes
+      - ./views:/usr/src/app/views
+      - ./public:/usr/src/app/public
+      - ./config:/usr/src/app/config
+      - ./server.js:/usr/src/app/server.js
+      - /usr/src/app/node_modules
 
   flask:
     build:
       context: ./flask
       dockerfile: Dockerfile
+    init: true
+    env_file:
+      - ./flask/.env
     ports:
       - "5001:5001"
+    volumes:
+      - ./flask:/app
