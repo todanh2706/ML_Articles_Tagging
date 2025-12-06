@@ -1,16 +1,30 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import csv
 import io
 import random
-from typing import Dict, List
+import time
+from typing import Dict, List, Optional, Iterable, Tuple
 
 from flask import Flask, request, jsonify
+from newspaper import Article, Config
+import feedparser
 
 from models import load_models, normalize_label
 
 app = Flask(__name__)
 
 TAGS = ["chinh-tri", "kinh-te", "giao-duc", "the-thao", "giai-tri", "cong-nghe", "doi-song"]
+TAG_RSS_MAP = {
+    "vnexpress": {
+        "home": "https://vnexpress.net/rss/tin-moi-nhat.rss",
+    },
+    "thanhnien": {
+        "home": "https://thanhnien.vn/rss/home.rss",
+    },
+    "laodong": {
+        "home": "https://laodong.vn/rss/home.rss",
+    },
+}
 
 
 def random_softmax():
@@ -37,6 +51,37 @@ if not MODELS:
     MODELS = [StubModel()]
 
 
+def fetch_article(url: str) -> Optional[Dict[str, str]]:
+    """
+    Try to extract article content/title via newspaper3k.
+    Returns None on failure to let caller fall back to stub.
+    """
+    cfg = Config()
+    cfg.browser_user_agent = "Mozilla/5.0 (compatible; ML-Articles-Tagger/1.0)"
+    cfg.request_timeout = 10
+    cfg.memoize_articles = False
+    article = Article(url, language="vi", config=cfg)
+    article.download()
+    article.parse()
+    text = (article.text or "").replace("\n", " ").strip()
+    if not text:
+        return None
+    title = (article.title or "").strip() or f"Fetched from {url}"
+    snippet = text[:200]
+    return {"title": title, "text": text, "snippet": snippet}
+
+
+def parse_published(entry) -> datetime:
+    ts = None
+    if getattr(entry, "published_parsed", None):
+        ts = entry.published_parsed
+    elif getattr(entry, "updated_parsed", None):
+        ts = entry.updated_parsed
+    if ts:
+        return datetime.fromtimestamp(time.mktime(ts), tz=timezone.utc)
+    return datetime.now(tz=timezone.utc)
+
+
 def normalize_tag(tag: str) -> str:
     return normalize_label(tag)
 
@@ -53,6 +98,51 @@ def format_prediction(model, text: str) -> Dict:
 
 def predict_with_models(text: str) -> List[Dict]:
     return [format_prediction(model, text) for model in MODELS]
+
+
+def iter_feed_articles(source: str, tag: str, max_items: int) -> Iterable[Dict]:
+    rss_url = TAG_RSS_MAP.get(source, {}).get("home")
+    if not rss_url:
+        return []
+
+    feed = feedparser.parse(rss_url)
+    if getattr(feed, "bozo", False):
+        return []
+
+    for entry in feed.entries[:max_items]:
+        url = getattr(entry, "link", None)
+        if not url:
+            continue
+        yield {
+            "source": source,
+            "url": url,
+            "title": (getattr(entry, "title", "") or "").strip(),
+            "summary": (getattr(entry, "summary", "") or "").strip(),
+            "published_at": parse_published(entry),
+        }
+
+
+def score_article_for_tag(text: str, tag: str) -> Tuple[List[Dict], str, str, float, int]:
+    models = predict_with_models(text)
+    normalized_tag = normalize_tag(tag)
+
+    best_model = ""
+    best_pred_tag = ""
+    best_prob = 0.0
+    consensus_hits = 0
+
+    for m in models:
+        probs = m.get("softmax") or {}
+        pred_tag = m.get("predicted_tag") or ""
+        prob = get_true_prob(probs, normalized_tag)
+        if normalize_tag(pred_tag) == normalized_tag and prob > 0:
+            consensus_hits += 1
+        if prob > best_prob:
+            best_prob = prob
+            best_model = m.get("name") or ""
+            best_pred_tag = pred_tag
+
+    return models, best_model, best_pred_tag, best_prob, consensus_hits
 
 
 def get_true_prob(probs: Dict, true_tag: str) -> float:
@@ -101,13 +191,24 @@ def predict_url():
     if not url:
         return jsonify({"error": "url is required"}), 400
 
-    # In real life: download and extract article text. Here we stub.
-    fake_text = f"Stub content fetched from {url}"
-    models = predict_with_models(fake_text)
+    title = f"Fetched article from {url}"
+    snippet = f"Stub content fetched from {url}"
+    text = snippet
+
+    try:
+        article = fetch_article(url)
+        if article:
+            title = article["title"]
+            snippet = article["snippet"]
+            text = article["text"]
+    except Exception as exc:  # pragma: no cover - defensive only
+        snippet = f"Fallback stub due to error: {exc}"
+
+    models = predict_with_models(text)
 
     return jsonify({
-        "title": f"Fetched article from {url}",
-        "snippet": fake_text[:200],
+        "title": title,
+        "snippet": snippet,
         "models": models,
     })
 
@@ -197,26 +298,72 @@ def crawl_tag():
     if not tag:
         return jsonify({"error": "tag is required"}), 400
 
-    articles = []
-    now = datetime.utcnow()
-    for i in range(6):
-        preds = predict_with_models(f"stub for {tag}")
-        top_pred = preds[0] if preds else {}
-        softmax = top_pred.get("softmax") or {}
-        confidence = max(softmax.values()) if softmax else 0.0
-        articles.append({
-            "title": f"Thanh Nien article {i + 1} ve {tag}",
-            "snippet": f"Doan tom tat ngan cho bai bao {i + 1} lien quan den {tag}.",
-            "url": f"https://thanhnien.vn/{tag}/bai-{i + 1}.html",
-            "source": "Thanh Nien",
-            "published_at": (now - timedelta(hours=i * 2)).isoformat(),
-            "predicted_tag": top_pred.get("predicted_tag"),
-            "model": top_pred.get("name"),
-            "confidence": confidence,
-            "models": preds,
-        })
+    normalized_tag = normalize_tag(tag)
 
-    return jsonify({"articles": articles})
+    sources_param = request.args.get("sources")
+    if sources_param:
+        requested_sources = [s.strip() for s in sources_param.split(",") if s.strip()]
+    else:
+        requested_sources = list(TAG_RSS_MAP.keys())
+
+    limit = request.args.get("limit", type=int) or 30
+    min_conf = request.args.get("min_conf", type=float) or 0.5
+    min_consensus = request.args.get("min_consensus", type=int) or 2
+
+    per_source_max = max(5, limit // max(len(requested_sources), 1) * 2)
+
+    collected = []
+
+    for source in requested_sources:
+        for raw_article in iter_feed_articles(source, normalized_tag, per_source_max):
+            try:
+                full = fetch_article(raw_article["url"])
+            except Exception:
+                full = None
+
+            if full and full.get("text"):
+                text = full["text"]
+                snippet = full["snippet"]
+                title = full["title"]
+            else:
+                text = raw_article["summary"] or raw_article["title"]
+                snippet = (raw_article["summary"] or text)[:200]
+                title = raw_article["title"]
+
+            models, best_model, best_pred_tag, best_prob, consensus_hits = score_article_for_tag(
+                text, normalized_tag
+            )
+
+            if best_prob < min_conf:
+                continue
+            if consensus_hits < min_consensus:
+                continue
+
+            collected.append({
+                "title": title,
+                "snippet": snippet,
+                "url": raw_article["url"],
+                "source": source,
+                "published_at": raw_article["published_at"].isoformat(),
+                "predicted_tag": best_pred_tag,
+                "model": best_model,
+                "confidence": round(float(best_prob), 3),
+                "consensus_hits": consensus_hits,
+                "match": normalize_tag(best_pred_tag or "") == normalized_tag,
+                "models": models,
+            })
+
+    collected.sort(key=lambda a: a["published_at"], reverse=True)
+    collected = collected[:limit]
+
+    return jsonify({
+        "tag": tag,
+        "normalized_tag": normalized_tag,
+        "sources": requested_sources,
+        "min_conf": min_conf,
+        "min_consensus": min_consensus,
+        "articles": collected,
+    })
 
 
 if __name__ == "__main__":
