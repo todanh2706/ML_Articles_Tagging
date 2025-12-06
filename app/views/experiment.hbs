@@ -1,7 +1,7 @@
 <div class="space-y-8">
   <div class="text-center">
     <h1 class="text-3xl font-bold text-gray-900">Thực nghiệm mô hình</h1>
-    <p class="mt-2 text-lg text-gray-600">Nhập bài báo để mô hình dự đoán tag và xem softmax của 3 model.</p>
+    <p class="mt-2 text-lg text-gray-600">Nhập bài báo để xem dự đoán và softmax từ các model.</p>
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -12,7 +12,7 @@
           <label for="content" class="block text-sm font-medium text-gray-700">Nội dung bài báo (text)</label>
           <textarea id="content" name="article_text" rows="6"
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
-            placeholder="Nhập nội dung bài báo vào đây...">{{inputText}}</textarea>
+            placeholder="Nhập nội dung bài báo...">{{inputText}}</textarea>
         </div>
         <button type="submit"
           class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -25,10 +25,10 @@
 
         {{#if textResult.models}}
         <div class="flex items-center space-x-4 mb-4">
-          <span class="text-sm text-gray-600">Tag dự đoán:</span>
+          <span class="text-sm text-gray-600">Tag gợi ý:</span>
           <span
             class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-            {{textResult.models.[0].predicted_tag}}
+            {{topTag}}
           </span>
         </div>
         <div class="space-y-3">
@@ -38,15 +38,15 @@
               <span>{{name}}</span>
               <span>{{predicted_tag}}</span>
             </div>
-            {{#if softmax}}
-            {{#each softmax}}
+            {{#if softmaxList}}
+            {{#each softmaxList}}
             <div class="mt-2">
               <div class="flex justify-between text-xs text-gray-700 mb-1">
-                <span>{{@key}}</span>
-                <span>{{this}}</span>
+                <span>{{label}}</span>
+                <span>{{prob}}</span>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="bg-indigo-600 h-2 rounded-full" style="width: calc({{this}} * 100%);"></div>
+                <div class="bg-indigo-600 h-2 rounded-full" style="width: calc({{prob}} * 100%);"></div>
               </div>
             </div>
             {{/each}}
@@ -55,41 +55,7 @@
           {{/each}}
         </div>
         {{else}}
-        <div class="flex items-center space-x-4 mb-4">
-          <span class="text-sm text-gray-600">Tag dự đoán:</span>
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-            Kinh tế
-          </span>
-        </div>
-        <div class="space-y-3">
-          <div class="bg-slate-50 p-3 rounded-lg">
-            <div class="flex justify-between text-sm font-medium text-gray-700 mb-1">
-              <span>Model 1 (FastText)</span>
-              <span>85%</span>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-2">
-              <div class="bg-indigo-600 h-2 rounded-full" style="width: 85%"></div>
-            </div>
-          </div>
-          <div class="bg-slate-50 p-3 rounded-lg">
-            <div class="flex justify-between text-sm font-medium text-gray-700 mb-1">
-              <span>Model 2 (BERT)</span>
-              <span>92%</span>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-2">
-              <div class="bg-indigo-600 h-2 rounded-full" style="width: 92%"></div>
-            </div>
-          </div>
-          <div class="bg-slate-50 p-3 rounded-lg">
-            <div class="flex justify-between text-sm font-medium text-gray-700 mb-1">
-              <span>Model 3 (Ensemble)</span>
-              <span>95%</span>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-2">
-              <div class="bg-indigo-600 h-2 rounded-full" style="width: 95%"></div>
-            </div>
-          </div>
-        </div>
+        <div class="text-sm text-gray-500">Nhập nội dung để xem kết quả.</div>
         {{/if}}
       </div>
     </div>
@@ -117,12 +83,16 @@
           <p class="text-sm text-gray-500 mt-1">{{urlResult.snippet}}</p>
         </div>
         {{/if}}
-        <div class="flex items-center space-x-4">
-          <span class="text-sm text-gray-600">Tag dự đoán:</span>
-          <span
-            class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-            {{#if urlResult.models}}{{urlResult.models.[0].predicted_tag}}{{else}}Công nghệ{{/if}}
-          </span>
+        <div class="flex flex-wrap gap-2">
+          {{#if urlResult.models}}
+            {{#each urlResult.models}}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              {{name}}: {{predicted_tag}}
+            </span>
+            {{/each}}
+          {{else}}
+            <span class="text-sm text-gray-500">Nhập URL để xem kết quả.</span>
+          {{/if}}
         </div>
       </div>
     </div>
@@ -153,18 +123,11 @@
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID
-            </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tiêu
-              đề</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model
-              1</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model
-              2</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model
-              3</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chi
-              tiết</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tiêu đề</th>
+            {{#each modelNames}}
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{this}}</th>
+            {{/each}}
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
@@ -173,37 +136,20 @@
           <tr>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{id}}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 truncate max-w-xs">{{title}}</td>
-            <td class="px-6 py-4 whitespace-nowrap"><span
-                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{{model1_tag}}</span>
+            {{#each ../modelNames}}
+            <td class="px-6 py-4 whitespace-nowrap">
+              {{#with (lookup ../modelMap this)}}
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{{predicted_tag}}</span>
+              {{/with}}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap"><span
-                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{{model2_tag}}</span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap"><span
-                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{{model3_tag}}</span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              <a href="#" class="text-indigo-600 hover:text-indigo-900">Xem</a>
-            </td>
+            {{/each}}
           </tr>
           {{/each}}
           {{else}}
           <tr>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 truncate max-w-xs">Phân tích thị trường chứng
-              khoán...</td>
-            <td class="px-6 py-4 whitespace-nowrap"><span
-                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Kinh
-                tế</span></td>
-            <td class="px-6 py-4 whitespace-nowrap"><span
-                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Kinh
-                tế</span></td>
-            <td class="px-6 py-4 whitespace-nowrap"><span
-                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Kinh
-                tế</span></td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              <a href="#" class="text-indigo-600 hover:text-indigo-900">Xem</a>
-            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 truncate max-w-xs">Phân tích thị trường chứng khoán...</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" colspan="3">Upload CSV để xem kết quả.</td>
           </tr>
           {{/if}}
         </tbody>
@@ -211,3 +157,5 @@
     </div>
   </div>
 </div>
+
+<script src="//unpkg.com/alpinejs" defer></script>
