@@ -1,7 +1,7 @@
 <div class="space-y-8">
   <div class="text-center">
-    <h1 class="text-3xl font-bold text-gray-900">Gắn tag tự động từ Báo Thanh Niên</h1>
-    <p class="mt-2 text-lg text-gray-600">Chọn chủ đề để hệ thống tự động thu thập và gắn tag các bài báo mới nhất.</p>
+    <h1 class="text-3xl font-bold text-gray-900">Gán tag tự động</h1>
+    <p class="mt-2 text-lg text-gray-600">Chọn chuyên mục để crawl từ backend và xem dự đoán của các model.</p>
   </div>
 
   <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
@@ -20,26 +20,37 @@
     <div class="flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-slate-200">
       <div class="flex items-center space-x-4 w-full sm:w-auto mb-4 sm:mb-0">
         <span class="text-sm text-gray-500">Đang xem: <span class="font-bold text-gray-900">{{selectedTag}}</span></span>
+        <span class="text-xs text-gray-400">({{articles.length}} bài)</span>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {{#if articles.length}}
       {{#each articles}}
-      <div
-        class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col">
-        <div class="p-6 flex-grow">
-          <div class="flex justify-between items-start mb-2">
-            <span
-              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">{{predicted_tag}}</span>
-            <span class="text-xs text-gray-500">{{published_at}}</span>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col">
+        <div class="p-6 flex-grow space-y-3">
+          <div class="flex justify-between items-start">
+            <div class="space-y-1">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">{{predicted_tag}}</span>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">consensus: {{consensus_hits}}</span>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">model: {{model}}</span>
+            </div>
+            <div class="text-right text-xs text-gray-500">{{published_at}}</div>
           </div>
-          <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">{{title}}</h3>
+          <div class="flex items-center space-x-2 text-xs text-gray-600">
+            <span class="font-semibold text-indigo-600">Confidence {{confidence}}</span>
+            {{#if match}}
+            <span class="text-emerald-600 font-semibold">Match</span>
+            {{else}}
+            <span class="text-amber-600 font-semibold">Off-tag</span>
+            {{/if}}
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 line-clamp-2">{{title}}</h3>
           <p class="text-sm text-gray-500 line-clamp-3">{{snippet}}</p>
         </div>
         <div class="bg-gray-50 px-6 py-4 border-t border-gray-100">
-          <div class="flex justify-between items-center">
-            <span class="text-xs text-gray-500">Nguồn: {{source}}</span>
+          <div class="flex justify-between items-center text-xs text-gray-500">
+            <span>Nguồn: {{source}}</span>
             <a href="{{url}}" target="_blank" rel="noopener noreferrer"
               class="text-sm font-medium text-indigo-600 hover:text-indigo-500">Đọc bài báo &rarr;</a>
           </div>
@@ -47,87 +58,8 @@
       </div>
       {{/each}}
       {{else}}
-      <div
-        class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col">
-        <div class="p-6 flex-grow">
-          <div class="flex justify-between items-start mb-2">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-              {{selectedTag}}
-            </span>
-            <span class="text-xs text-gray-500">2 giờ trước</span>
-          </div>
-          <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">Bài báo mẫu 1 về {{selectedTag}}</h3>
-          <p class="text-sm text-gray-500 line-clamp-3">Tóm tắt nội dung bài báo số 1 liên quan đến {{selectedTag}}, hiển thị để minh họa.</p>
-        </div>
-        <div class="bg-gray-50 px-6 py-4 border-t border-gray-100">
-          <div class="flex justify-between items-center">
-            <span class="text-xs text-gray-500">Nguồn: Thanh Niên</span>
-            <a href="#" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">Đọc bài báo &rarr;</a>
-          </div>
-        </div>
-      </div>
-      <div
-        class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col">
-        <div class="p-6 flex-grow">
-          <div class="flex justify-between items-start mb-2">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-              {{selectedTag}}
-            </span>
-            <span class="text-xs text-gray-500">4 giờ trước</span>
-          </div>
-          <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">Bài báo mẫu 2 về {{selectedTag}}</h3>
-          <p class="text-sm text-gray-500 line-clamp-3">Tóm tắt nội dung bài báo số 2 liên quan đến {{selectedTag}}, hiển thị để minh họa.</p>
-        </div>
-        <div class="bg-gray-50 px-6 py-4 border-t border-gray-100">
-          <div class="flex justify-between items-center">
-            <span class="text-xs text-gray-500">Nguồn: Thanh Niên</span>
-            <a href="#" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">Đọc bài báo &rarr;</a>
-          </div>
-        </div>
-      </div>
-      <div
-        class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col">
-        <div class="p-6 flex-grow">
-          <div class="flex justify-between items-start mb-2">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-              {{selectedTag}}
-            </span>
-            <span class="text-xs text-gray-500">6 giờ trước</span>
-          </div>
-          <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">Bài báo mẫu 3 về {{selectedTag}}</h3>
-          <p class="text-sm text-gray-500 line-clamp-3">Tóm tắt nội dung bài báo số 3 liên quan đến {{selectedTag}}, hiển thị để minh họa.</p>
-        </div>
-        <div class="bg-gray-50 px-6 py-4 border-t border-gray-100">
-          <div class="flex justify-between items-center">
-            <span class="text-xs text-gray-500">Nguồn: Thanh Niên</span>
-            <a href="#" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">Đọc bài báo &rarr;</a>
-          </div>
-        </div>
-      </div>
-      <div
-        class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col">
-        <div class="p-6 flex-grow">
-          <div class="flex justify-between items-start mb-2">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-              {{selectedTag}}
-            </span>
-            <span class="text-xs text-gray-500">1 ngày trước</span>
-          </div>
-          <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">Bài báo mẫu 4 về {{selectedTag}}</h3>
-          <p class="text-sm text-gray-500 line-clamp-3">Tóm tắt nội dung bài báo số 4 liên quan đến {{selectedTag}}, hiển thị để minh họa.</p>
-        </div>
-        <div class="bg-gray-50 px-6 py-4 border-t border-gray-100">
-          <div class="flex justify-between items-center">
-            <span class="text-xs text-gray-500">Nguồn: Thanh Niên</span>
-            <a href="#" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">Đọc bài báo &rarr;</a>
-          </div>
-        </div>
-      </div>
+      <div class="col-span-3 text-sm text-gray-500">Chưa có bài phù hợp. Thử tag khác hoặc giảm ngưỡng.</div>
       {{/if}}
-    </div>
-
-    <div class="text-center text-sm text-gray-400 mt-8">
-      Nguồn dữ liệu: Báo Thanh Niên
     </div>
   </div>
   {{else}}
