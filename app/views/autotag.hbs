@@ -8,7 +8,7 @@
     {{#each tags}}
     <a href="/autotag/tag/{{this.key}}">
       <button
-        class="py-4 px-5 text-base rounded-lg font-semibold shadow-sm focus:outline-none transition-colors duration-200 {{#if (eq ../selectedTag this.key)}}bg-indigo-600 text-white ring-2 ring-offset-2 ring-indigo-500{{else}}bg-white text-gray-700 hover:bg-gray-50 border border-gray-300{{/if}}">
+        class="py-3 px-6 text-base rounded-full font-medium transition-colors duration-200 {{#if (eq ../selectedTag this.key)}}bg-indigo-600 text-white shadow-md{{else}}bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 hover:border-gray-400 shadow-sm{{/if}}">
         {{this.label}}
       </button>
     </a>
@@ -17,23 +17,27 @@
 
   {{#if selectedTag}}
   <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-slate-200">
-      <div class="flex items-center space-x-4 w-full sm:w-auto mb-4 sm:mb-0">
-        <span class="text-sm text-gray-500">Đang xem: <span class="font-bold text-gray-900">{{selectedTag}}</span></span>
-        <span class="text-xs text-gray-400">({{articles.length}} bài)</span>
-      </div>
+    <div class="flex items-center space-x-3 mb-6">
+      <h2 class="text-2xl text-gray-800">Đang xem: <span class="font-bold text-indigo-700">{{selectedTag}}</span></h2>
+      <span class="text-sm text-gray-500">({{articles.length}} bài)</span>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {{#if articles.length}}
       {{#each articles}}
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col">
+      <div
+        class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col">
         <div class="p-6 flex-grow space-y-3">
           <div class="flex justify-between items-start">
             <div class="space-y-1">
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">{{predicted_tag}}</span>
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">consensus: {{consensus_hits}}</span>
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">model: {{model}}</span>
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">{{predicted_tag}}</span>
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">consensus:
+                {{consensus_hits}}</span>
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">model:
+                {{model}}</span>
             </div>
             <div class="text-right text-xs text-gray-500">{{published_at}}</div>
           </div>
@@ -58,12 +62,16 @@
       </div>
       {{/each}}
       {{else}}
-      <div class="col-span-3 text-sm text-gray-500">Chưa có bài phù hợp. Thử tag khác hoặc giảm ngưỡng.</div>
+      <div class="col-span-full text-center py-12">
+        <p class="text-xl text-gray-400">Chưa có bài phù hợp. Thử tag khác hoặc giảm ngưỡng.</p>
+      </div>
       {{/if}}
     </div>
   </div>
   {{else}}
-  <div class="text-center text-sm text-gray-500">Chọn một tag để bắt đầu.</div>
+  <div class="text-center mt-20">
+    <p class="text-3xl text-gray-300 font-light">Chọn một tag để bắt đầu</p>
+  </div>
   {{/if}}
 </div>
 
