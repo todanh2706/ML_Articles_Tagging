@@ -33,6 +33,31 @@ app.engine(
       eq(a, b) {
         return a === b;
       },
+      formatDateTime(value) {
+        if (!value) return '';
+
+        let s = String(value);
+        // cắt phần microseconds .462870 cho chắc ăn
+        if (s.includes('.')) {
+          s = s.split('.')[0]; // "2025-12-10T21:09:56"
+        }
+
+        const date = new Date(s);
+        if (isNaN(date.getTime())) {
+          return value; // parse không được thì trả nguyên
+        }
+
+        const pad = (n) => String(n).padStart(2, '0');
+
+        const day = pad(date.getDate());
+        const month = pad(date.getMonth() + 1);
+        const year = date.getFullYear();
+        const hour = pad(date.getHours());
+        const minute = pad(date.getMinutes());
+        const second = pad(date.getSeconds());
+
+        return `${day}/${month}/${year} ${hour}:${minute}:${second}`;
+      },
     },
   })
 );
