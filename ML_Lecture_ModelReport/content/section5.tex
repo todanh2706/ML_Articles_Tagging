@@ -1,0 +1,147 @@
+\pagebreak
+\section{Kết quả thực nghiệm}
+
+\subsection{TF-IDF + Linear SVM}
+
+\subsubsection{Biểu đồ quá trình học (Learning Curves)}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{img/learning_curve_loss.png}
+\caption{Learning Curve cho Loss theo từng epoch (TF-IDF + Linear SVM via SGD)}
+\label{fig:svm-lc-loss}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{img/learning_curve_accuracy.png}
+\caption{Learning Curve cho Accuracy theo từng epoch (TF-IDF + Linear SVM via SGD)}
+\label{fig:svm-lc-acc}
+\end{figure}
+
+\paragraph{Nhận xét}
+\begin{itemize}
+    \item \textbf{Hội tụ và ổn định:} Validation Loss giảm mạnh trong vài epoch đầu (epoch 1--7) và sau đó gần như ổn định quanh mức $\sim 0.126 - 0.13$. Đồng thời Validation Accuracy tăng dần và dao động nhẹ quanh $\sim 0.946 - 0.951$, cho thấy mô hình đạt trạng thái hội tụ tương đối sớm và quá trình huấn luyện ổn định (không có dao động mạnh).
+    \item \textbf{Khoảng cách Train--Validation:} Train Accuracy nhanh chóng đạt gần $100\%$ từ rất sớm và Train Loss giảm gần về $0$. Trong khi đó, Validation Accuracy chỉ tăng nhẹ rồi chững lại. Đây là dấu hiệu overfitting nhẹ (mô hình khớp rất tốt trên tập Train nhưng mức cải thiện trên Validation không tương ứng).
+    \item \textbf{Lưu ý về cách ghi nhận loss theo epoch:} LinearSVC không cung cấp lịch sử loss theo từng epoch; do đó learning curves được xây dựng bằng mô hình thay thế \texttt{SGDClassifier(loss="hinge")} trên cùng đặc trưng TF-IDF để mô phỏng quá trình tối ưu của SVM tuyến tính và ghi nhận hinge loss theo epoch.
+\end{itemize}
+
+\subsubsection{Đánh giá trên tập kiểm thử (Test set)}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.80\textwidth]{img/overall_metrics_test.png}
+\caption{Các chỉ số đánh giá tổng thể trên tập test của TF-IDF + SVM}
+\label{fig:svm-test-metrics}
+\end{figure}
+
+Trên tập Test, mô hình đạt Accuracy = 0.9514, Macro Precision = 0.9513, Macro Recall = 0.9507 và Macro F1 = 0.9504. Các chỉ số macro khá gần nhau, cho thấy mô hình hoạt động tương đối cân bằng giữa các lớp, không bị thiên lệch quá nhiều vào một nhãn cụ thể.
+
+\subsubsection{Ma trận nhầm lẫn (Confusion Matrix)}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{img/confusion_matrix_test.png}
+\caption{Confusion matrix của TF-IDF + SVM trên tập Test}
+\label{fig:svm-confusion-matrix}
+\end{figure}
+
+\paragraph{Phân tích}
+\begin{itemize}
+    \item Đường chéo chính chiếm đa số, phản ánh tỷ lệ dự đoán đúng cao trên hầu hết các lớp.
+    \item \textbf{Lớp 0 và 1} có hiệu năng rất tốt (gần như không nhầm lẫn), số lượng dự đoán đúng trên đường chéo rất lớn.
+    \item \textbf{Nhóm nhầm lẫn đáng chú ý nhất nằm ở lớp 6:} lớp 6 bị dự đoán nhầm sang lớp 3 và lớp 4 khá nhiều (ví dụ các ô (6,3) và (6,4) có giá trị cao), dẫn đến Recall của lớp 6 thấp hơn đáng kể so với các lớp còn lại (khoảng $0.82$ theo classification report).
+    \item Các lớp 2--5 nhìn chung ít nhầm lẫn, tuy nhiên vẫn có một số nhầm chéo nhỏ giữa các lớp có nội dung gần nhau (thể hiện qua các ô ngoài đường chéo có giá trị nhỏ).
+\end{itemize}
+
+Tổng kết lại, TF-IDF + Linear SVM cho hiệu năng tổng thể tốt (Macro F1 $\approx 0.9504$) và ổn định trên tập Test. Tuy nhiên, sai số vẫn tập trung chủ yếu ở một số lớp có nội dung dễ chồng lấn (đặc biệt lớp 6), đồng thời learning curves cho thấy mô hình có xu hướng khớp rất mạnh trên Train (overfitting nhẹ). Điều này là đặc trưng thường gặp của mô hình tuyến tính với không gian đặc trưng TF-IDF chiều cao.
+
+
+\subsection{FastText}
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.75]{img/fasttext_learning_curves.png}
+\caption{Hình learning curves của FastText}
+\label{fig:my_label}
+\end{figure}
+
+\paragraph{Nhận xét}
+\begin{itemize}
+    \item LogLoss trên cả Train và Validation giảm đều theo epoch (đặc biệt giảm mạnh từ 5 đến 10 epoch), cho thấy mô hình học được quy luật và có xu hướng hội tụ. Accuracy tăng dần và ổn định theo thời gian, phù hợp với xu hướng giảm của loss.
+    \item Các đường cong thay đổi mượt, không xuất hiện dao động mạnh giữa các mốc epoch. Điều này cho thấy quá trình huấn luyện tương đối ổn định.
+    \item Về khoảng cách Train--Validation: từ sau khoảng 10 - 15 epoch, Train Loss tiếp tục giảm và Train Accuracy tiếp tục tăng, trong khi Validation Accuracy tăng chậm và gần như chững lại ở khoảng 20--25 epoch; đồng thời Validation Loss giảm chậm hơn so với Train Loss. Đây là dấu hiệu mô hình bắt đầu có xu hướng overfitting khi tăng epoch quá cao.
+\end{itemize}
+
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{img/fasttext_overall_metrics.png}
+\caption{Các chỉ số đánh giá tổng thể trên tập test của FastText}
+\label{fig:fasttext-test-metrics}
+\end{figure}
+
+Trên tập Test, mô hình đạt Accuracy = 0.9182, Macro Precision = 0.9170, Macro Recall = 0.9172 và Macro F1 = 0.9168. Các giá trị Precision/Recall/F1 (macro) khá gần nhau, cho thấy hiệu năng giữa các lớp tương đối đồng đều, không bị lệch quá mạnh về một vài lớp.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{img/fasttext_confusion_matrix.png}
+\caption{Confusion matrix của FastText trên tập Test}
+\label{fig:fasttext-confusion-matrix}
+\end{figure}
+Nhìn chung, các phần tử trên đường chéo chính chiếm đa số, cho thấy mô hình phân biệt tốt phần lớn các chuyên mục. Một số cặp lớp có mức nhầm lẫn đáng chú ý:
+
+\begin{itemize}
+    \item Lớp thời\_sự bị nhầm nhiều sang chính\_trị (44 mẫu) và kinh\_tế (43 mẫu). Đây là nhóm nhãn có nội dung dễ giao thoa do cùng phản ánh các sự kiện thời sự, chính sách và tình hình kinh tế--xã hội.
+    \item Lớp kinh\_tế cũng có xu hướng bị dự đoán sang thời\_sự (35 mẫu), phù hợp với việc nhiều bài kinh tế được viết theo dạng tin tức cập nhật.
+    \item Lớp chính\_trị đôi khi bị nhầm sang thời\_sự (21 mẫu) và kinh\_tế (11 mẫu), cho thấy ranh giới giữa các nhóm chủ đề này không hoàn toàn tách bạch khi chỉ dựa trên đặc trưng từ/ngữ.
+    \item Các lớp như thể\_thao và thế\_giới có tỷ lệ nhầm lẫn thấp hơn, nhiều khả năng do có từ khóa đặc trưng và bối cảnh ít chồng lấn hơn.
+\end{itemize}
+
+Nhìn từ confusion matrix, các lỗi chủ yếu tập trung ở nhóm nhãn có nội dung gần nhau, đặc biệt là thời\_sự, chính\_trị và kinh\_tế. Đây cũng là hạn chế của mô hình dựa trên bag-of-words/subwords như FastText, và là lý do các mô hình ngôn ngữ theo ngữ cảnh như PhoBERT được kỳ vọng sẽ cải thiện tốt hơn trong các trường hợp này.
+\subsection{PhoBERT}
+\subsubsection{Biểu đồ quá trình học}
+Quá trình huấn luyện được thực hiện trong 4 chu kỳ (epochs) với kích thước lô (batch size) là 16. Diễn biến của hàm mất mát (Loss) và độ chính xác (Accuracy) trên tập huấn luyện (Train) và tập kiểm định (Validation) được thể hiện qua các biểu đồ dưới đây:
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{img/phobert_learning_curve_loss.png}
+    \caption{Learning Curve cho Loss theo từng epoch}
+    \label{fig:lc-loss-phobert}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{img/phobert_learning_curve_metrics.png}
+    \caption{Learning Curve cho Accuracy theo từng epoch}
+    \label{fig:lc-accu-phobert}
+\end{figure}
+Nhận xét:
+\begin{itemize}
+    \item \textbf{Hội tụ:} Biểu đồ Loss cho thấy hàm mất mát giảm đều đặn trên cả tập Train và Validation, chứng tỏ mô hình đang học tốt các đặc trưng dữ liệu.
+    \item \textbf{Độ ổn định:} Khoảng cách giữa đường Loss của Train và Validation rất nhỏ, đồng thời Accuracy trên tập Validation tăng trưởng đồng biến với tập Train. Điều này cho thấy không xuất hiện hiện tượng dao động mạnh (oscillation) hoặc quá khớp (overfitting) nghiêm trọng trong giai đoạn huấn luyện sớm.
+\end{itemize}
+\subsubsection{Đánh giá trên tập kiểm thử}
+Việc đánh giá định lượng được thực hiện trên tập dữ liệu kiểm thử độc lập gồm 2,078 mẫu , đại diện cho 7 chuyên mục tin tức. Kết quả được phân tích dựa trên các chỉ số hiệu năng tổng quát và chi tiết từng lớp. Biểu đồ dưới đây tóm tắt 4 độ đo quan trọng nhất để đánh giá chất lượng mô hình phân loại: Accuracy, Precision, Recall và F1-Score.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{img/phobert_overall_metrics_result.png}
+    \caption{Các chỉ số đánh giá tổng thể trên tập test của PhoBERT}
+    \label{fig:placeholder}
+\end{figure}
+Phân tích kết quả:
+\begin{itemize}
+    \item \textbf{Độ chính xác (Accuracy) đạt $95.52\%$:} Đây là tỷ lệ dự đoán đúng trên tổng số mẫu, cho thấy mô hình đã học tốt các đặc trưng ngữ nghĩa của văn bản báo chí tiếng Việt.
+    \item \textbf{Sự đồng nhất giữa các chỉ số:} Quan sát biểu đồ cột, ta thấy sự chênh lệch giữa Accuracy và F1-Score ($95.54\%$) là không đáng kể (chỉ khoảng $0.02\%$). Điều này chứng minh mô hình hoạt động ổn định, không bị thiên lệch (bias) về phía các lớp đa số và xử lý tốt sự mất cân bằng nhẹ giữa các lớp dữ liệu.
+    \item \textbf{Precision ($95.52\%$) và Recall ($95.52\%$) cân bằng:} Cho thấy mô hình cân bằng tốt giữa khả năng dự đoán chính xác (không gán nhãn sai) và khả năng bao phủ (không bỏ sót bài báo thuộc nhãn đó).
+\end{itemize}
+
+
+\subsection{Ma trận nhầm lẫn (Confusion Matrix)}
+Ma trận nhầm lẫn dưới đây minh họa chi tiết sự phân bố các dự đoán của mô hình so với nhãn thực tế:
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{img/phobert_confusion_matrix.png}
+    \caption{Ma trận nhầm lẫn cho PhoBERT}
+    \label{fig:cof-matrix-bert}
+\end{figure}
+Phân tích:
+\begin{itemize}
+    \item Đường chéo chính có giá trị rất lớn, thể hiện số lượng mẫu được dự đoán đúng chiếm đa số tuyệt đối.
+    \item Các ô nằm ngoài đường chéo thể hiện sự nhầm lẫn (confusion), tập trung chủ yếu ở cặp nhãn Thời sự - Chính trị và Thời sự - Kinh tế. Điều này phù hợp với bảng chỉ số F1-Score, nơi nhãn "Thời sự" có hiệu năng thấp nhất.
+\end{itemize}

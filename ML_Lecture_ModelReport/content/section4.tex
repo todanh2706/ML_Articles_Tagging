@@ -1,0 +1,117 @@
+\pagebreak
+\section{Cấu hình huấn luyện}
+\subsection{FastText}
+
+Hệ thống sử dụng thư viện \texttt{fastText} cho bài toán phân loại đơn nhãn với 7 lớp. Dữ liệu được trích xuất và chuẩn hóa từ cơ sở dữ liệu SQLite (\texttt{dataset/articles.db}), trong đó mỗi mẫu được ghép từ trường \texttt{title} và \texttt{content}. Văn bản được chuyển về chữ thường, giữ lại các dấu câu cơ bản, sau đó gắn tiền tố nhãn \texttt{\_\_label\_\_} theo định dạng yêu cầu của fastText. Tập dữ liệu được chia theo tỷ lệ 70/15/15 cho các tập Train, Validation và Test (\texttt{train\_fasttext.py}).
+
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|p{8cm}|}
+    \hline
+    Tham số & Giá trị & Giải thích \\
+    \hline
+    Epochs & \{5, 10, 15, 20, 25\} & Huấn luyện với nhiều mốc epoch để quan sát quá trình hội tụ thông qua learning curves và chọn mô hình tốt nhất theo F1 trên Validation. \\
+    \hline
+    Learning Rate & 0.3 & Tốc độ học mặc định của fastText, phù hợp với cơ chế tối ưu SGD nhẹ. \\
+    \hline
+    Embedding dim & 150 & Kích thước vector biểu diễn từ và subword. \\
+    \hline
+    wordNgrams & 2 & Bổ sung thông tin bi-gram nhằm giữ lại ngữ cảnh cục bộ giữa các từ. \\
+    \hline
+    Subword & minn=2, maxn=5 & Sử dụng ký tự n-gram để giảm hiện tượng từ ngoài từ điển (OOV) và cải thiện khả năng tổng quát hóa. \\
+    \hline
+    Loss & \texttt{softmax} & Phù hợp cho bài toán phân loại đơn lớp; LogLoss được sử dụng để theo dõi quá trình huấn luyện. \\
+    \hline
+\end{tabular}
+\caption{Các siêu tham số của mô hình FastText}
+\label{label:hyperparams-fasttext}
+\end{table}
+
+Chiến lược huấn luyện và đánh giá được thực hiện như sau:
+\begin{itemize}
+    \item Huấn luyện mô hình với từng cấu hình số epoch, ghi lại Accuracy và LogLoss trên tập Train và Validation. Mô hình có F1 cao nhất trên Validation được lưu lại.
+    \item Đánh giá trên tập Test với các chỉ số Accuracy, Precision, Recall và F1 (macro), đồng thời xuất classification report để phân tích chi tiết từng lớp. Confusion matrix được sử dụng để quan sát các nhãn dễ nhầm lẫn.
+    \item Tiêu chí lựa chọn mô hình dựa trên F1 cao nhất trên Validation, kết hợp theo dõi LogLoss để kiểm tra mức độ hội tụ và phát hiện hiện tượng overfitting hoặc lệch pha giữa Train và Validation.
+\end{itemize}
+
+
+\subsection{PhoBERT \cite{phobert}}
+Hệ thống được xây dựng dựa trên các thư viện mã nguồn mở tiêu chuẩn trong nghiên cứu Xử lý Ngôn ngữ Tự nhiên (NLP):
+\begin{itemize}
+    \item \textbf{Framework:} Sử dụng PyTorch kết hợp với Hugging Face Transformers (API Trainer) để quản lý quy trình huấn luyện và đánh giá.
+    \item \textbf{Xử lý dữ liệu:} Dữ liệu đầu vào được yêu cầu đã qua bước tách từ (segmentation) trước khi nạp vào mô hình, sử dụng trường thông tin \texttt{content\_segmented} để đảm bảo tương thích với bộ từ điển của PhoBERT.
+\end{itemize}
+Quá trình huấn luyện được thực hiện với bộ tham số được tối ưu hoá như sau:
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|p{8cm}|}
+    \hline
+    \textbf{Tham số} & \textbf{Giá trị} & \textbf{Giải thích} \\
+    \hline
+    \textbf{Kiến trúc mô hình} & \texttt{vinai/phobert-base} & Sử dụng phiên bản Base của PhoBERT, phù hợp với tài nguyên tính toán và quy mô dữ liệu. \\
+    \hline
+    \textbf{Epochs} & 4 & Số lần mô hình duyệt qua toàn bộ tập dữ liệu huấn luyện.\\
+    \hline
+    \textbf{Batch size} & 16 & Thiết lập cho cả tập huấn luyện và kiểm thử để phù hợp với bộ nhớ GPU.\\
+    \hline
+    \textbf{Learning Rate} & $2 \times 10^{-5}$ & Tốc độ học nhỏ giúp mô hình hội tụ ổn định, tránh dao động mạnh quanh điểm cực trị.\\
+    \hline
+    \textbf{Độ dài chuỗi tối đa} & 256 tokens & Giới hạn độ dài văn bản đầu vào để cân bằng giữa ngữ cảnh và hiệu năng.\\
+    \hline
+\end{tabular}
+\caption{Bảng mô tả siêu tham số cho mô hình PhoBERT}
+\label{label:hyperparams-phobert}
+\end{table}
+Bên cạnh đó, chiến lược tối ưu hoá (Optimization Strategy) cũng được áp dụng, cụ thể là lớp \texttt{TrainingArguments}:
+\begin{itemize}
+    \item \textbf{Cơ chế Warm-up:} Áp dụng \texttt{warmup\_steps=500}. Mô hình khởi động với tốc độ học thấp và tăng dần trong 500 bước đầu tiên để ổn định trọng số trước khi học với tốc độ tiêu chuẩn.
+    \item \textbf{Regularization:} Sử dụng trọng số suy giảm (\texttt{weight\_decay=0.01}) để hạn chế hiện tượng quá khớp (overfitting) bằng cách phạt các trọng số có giá trị quá lớn.
+    \item \textbf{Chiến lược lưu trữ:} Sử dụng chiến lược \texttt{save\_strategy="epoch"} và \texttt{load\_best\_model\_at\_} \texttt{end=True}, đảm bảo mô hình cuối cùng được chọn là mô hình có chỉ số F1 tốt nhất trên tập Validation chứ không phải mô hình tại epoch cuối cùng.
+\end{itemize}
+
+\subsection{TF-IDF + SVM}
+
+Bên cạnh FastText và PhoBERT, hệ thống triển khai một mô hình học máy cổ điển (traditional ML) dựa trên đặc trưng TF-IDF kết hợp bộ phân loại Linear SVM (LinearSVC) cho bài toán phân loại đơn nhãn với 7 lớp. Dữ liệu được nạp từ các tệp CSV đã được tiền xử lý và chia sẵn theo tỷ lệ 70/15/15 cho Train/Validation/Test (\texttt{train/X\_train\_basic.csv}, \texttt{val/X\_val\_basic.csv}, \texttt{test/X\_test\_basic.csv}). 
+
+Mỗi mẫu văn bản sử dụng cột \texttt{content\_final} (đã qua chuẩn hóa ở pipeline tiền xử lý). Nhãn tương ứng được lấy từ cột \texttt{label\_encoded}. Các mẫu có nhãn bị thiếu (NaN) được loại bỏ trước khi huấn luyện để đảm bảo tính nhất quán dữ liệu.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|p{8cm}|}
+    \hline
+    \textbf{Tham số} & \textbf{Giá trị} & \textbf{Giải thích} \\
+    \hline
+    \textbf{Biểu diễn văn bản} & TF-IDF & Chuyển văn bản sang vector trọng số theo tần suất (TF) và độ hiếm (IDF), phù hợp với các mô hình tuyến tính. \\
+    \hline
+    \textbf{ngram\_range} & (1,1) hoặc (1,2) & So sánh giữa unigram và unigram+bigram nhằm tăng khả năng nắm bắt ngữ cảnh cục bộ. \\
+    \hline
+    \textbf{min\_df} & 2 & Loại bỏ các từ xuất hiện quá ít (nhiễu), giúp giảm kích thước không gian đặc trưng. \\
+    \hline
+    \textbf{max\_df} & \{0.8, 0.9, 1.0\} & Loại bỏ từ quá phổ biến (ít phân biệt), được tinh chỉnh bằng Grid Search. \\
+    \hline
+    \textbf{sublinear\_tf} & True & Áp dụng chuẩn hóa log cho TF để giảm ảnh hưởng của các từ lặp quá nhiều. \\
+    \hline
+    \textbf{Bộ phân loại} & LinearSVC & SVM tuyến tính tối ưu biên phân tách, phù hợp cho dữ liệu chiều cao và thưa như TF-IDF. \\
+    \hline
+    \textbf{class\_weight} & balanced & Tự động cân bằng trọng số theo phân phối lớp để giảm thiên lệch về lớp phổ biến. \\
+    \hline
+    \textbf{C (regularization)} & \{0.1, 0.5, 1.0, 2.0, 5.0\} & Hệ số phạt điều khiển mức độ regularization: C lớn $\rightarrow$ ít phạt hơn, mô hình fit mạnh hơn. \\
+    \hline
+    \textbf{Tối ưu siêu tham số} & GridSearchCV (cv=3) & Dò lưới siêu tham số trên tập Train với 3-fold CV nội bộ, chọn theo \texttt{f1\_macro}. \\
+    \hline
+    \textbf{Metric lựa chọn} & F1-macro & Phù hợp cho đa lớp và coi trọng đồng đều các lớp, hạn chế ảnh hưởng mất cân bằng. \\
+    \hline
+\end{tabular}
+\caption{Các siêu tham số và thiết lập huấn luyện cho mô hình TF-IDF + SVM}
+\label{label:hyperparams-tfidf-svm}
+\end{table}
+
+Chiến lược huấn luyện và đánh giá được thực hiện như sau:
+\begin{itemize}
+    \item \textbf{Huấn luyện \& tinh chỉnh:} Xây dựng pipeline \texttt{TF-IDF $\rightarrow$ LinearSVC}. Toàn bộ siêu tham số được tinh chỉnh bằng \texttt{GridSearchCV} trên tập Train với 3-fold CV nội bộ, tiêu chí chọn là \textbf{F1-macro} nhằm tối ưu hiệu năng đồng đều giữa các lớp.
+    \item \textbf{Đánh giá Validation:} Sau khi tìm được cấu hình tốt nhất từ CV, mô hình được đánh giá trên tập Validation bằng các chỉ số Accuracy, Precision, Recall, F1-macro và \texttt{classification\_report} để phân tích chi tiết theo từng lớp.
+    \item \textbf{Huấn luyện lại và kiểm thử:} Mô hình tốt nhất (\texttt{best\_estimator\_}) được train lại trên Train+Validation để tận dụng tối đa dữ liệu trước khi đánh giá cuối cùng trên tập Test.
+    \item \textbf{Lưu mô hình:} Pipeline tốt nhất được lưu bằng \texttt{joblib} (\texttt{tfidf\_svm.joblib}); đồng thời lưu metadata ánh xạ nhãn (\texttt{tfidf\_svm\_labels.json}) phục vụ suy luận và hiển thị nhãn dễ đọc trong ứng dụng.
+\end{itemize}
+

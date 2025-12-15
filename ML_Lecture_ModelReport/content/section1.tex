@@ -1,0 +1,10 @@
+\pagebreak
+\section{Giới thiệu bài toán}
+Trong bối cảnh bùng nổ thông tin số, các tòa soạn báo điện tử và hệ thống tổng hợp tin tức tại Việt Nam đang đối mặt với thách thức lớn trong việc quản lý và phân phối nội dung. Các phương pháp phân loại thủ công truyền thống không còn đáp ứng được yêu cầu về tốc độ, khả năng mở rộng và thường dễ xảy ra sai sót do yếu tố chủ quan. Bên cạnh đó, nhu cầu tiếp cận thông tin của độc giả hiện đại đã chuyển dịch sang xu hướng tìm kiếm chủ động theo từ khóa và chủ đề cụ thể thay vì duyệt thụ động theo chuyên mục tĩnh.\\
+Nhóm nghiên cứu xác định bài toán cần giải quyết là \textbf{Phân loại văn bản tiếng Việt đa lớp (Multi-class Vietnamese Text Classification)}.\\
+Mục tiêu của bài toán là xây dựng một hệ thống học máy có khả năng:
+\begin{itemize}
+    \item Tiếp nhận đầu vào là văn bản thô (raw text) hoặc đường dẫn (URL) của một bài báo tiếng Việt.
+    \item Tự động phân tích ngữ nghĩa và gán nhãn chủ đề chính xác nhất cho bài báo đó dựa trên 7 nhãn chuyên mục đã định nghĩa trước: \textbf{Thể thao, Thời sự, Chính trị, Kinh tế, Giáo dục, Sức khoẻ, Thế giới}.
+    \item Giải quyết bài toán dưới góc độ so sánh hiệu năng giữa các phương pháp học máy truyền thống (TF-IDF + SVM) và các mô hình học sâu hiện đại (FastText, PhoBERT) để tìm ra kiến trúc tối ưu nhất cho đặc thù ngôn ngữ tiếng Việt .
+\end{itemize}

@@ -1,0 +1,64 @@
+\pagebreak
+\section{Thảo luận và Phân tích lỗi}
+
+Dựa trên kết quả thực nghiệm thu được từ ba mô hình (TF-IDF + SVM, FastText, và PhoBERT), phần này tập trung phân tích trạng thái huấn luyện, đi sâu vào các trường hợp dự đoán sai và so sánh hiệu năng để rút ra kết luận cuối cùng.
+
+\subsection{Hiện tượng Overfitting và Underfitting}
+Việc xác định trạng thái của mô hình dựa trên sự tương quan giữa kết quả trên tập Train và Validation/Test:
+
+\begin{itemize}
+    \item \textbf{TF-IDF + Linear SVM:} Mô hình cho thấy dấu hiệu \textit{overfitting nhẹ}. Trên tập Train, độ chính xác đạt gần tuyệt đối ($100\%$) và Loss tiệm cận 0, trong khi Accuracy trên tập Validation chỉ dừng lại ở mức $\approx 95\%$. Điều này phản ánh đặc trưng của các mô hình tuyến tính khi làm việc với không gian vector thưa chiều cao (High-dimensional sparse data), dễ dàng ghi nhớ nhiễu trong dữ liệu huấn luyện.
+    
+    \item \textbf{FastText:} Xu hướng \textit{overfitting} xuất hiện rõ rệt sau epoch thứ 15. Trong khi Train Loss tiếp tục giảm sâu, Validation Loss lại có xu hướng chững lại và giảm chậm hơn. Điều này cho thấy mô hình bắt đầu học thuộc lòng các n-grams đặc thù của tập Train mà không đóng góp vào khả năng tổng quát hóa.
+    
+    \item \textbf{PhoBERT:} Đây là mô hình đạt trạng thái \textit{Good Fit} tốt nhất. Khoảng cách giữa Loss của tập Train và Validation rất nhỏ, đồng thời độ chính xác trên tập Test ($95.52\%$) tương đương với kết quả trên tập Validation. Kiến trúc Transformer cùng cơ chế Regularization có sẵn đã giúp mô hình tổng quát hóa tốt hơn.
+\end{itemize}
+
+\subsection{Các biện pháp khắc phục đã thực hiện}
+Để kiểm soát hiện tượng Overfitting và tối ưu hóa hiệu năng như đã trình bày, nhóm nghiên cứu đã áp dụng các kỹ thuật sau trong quá trình thực nghiệm:
+
+\begin{itemize}
+    \item \textbf{Early Stopping:} Đối với FastText và PhoBERT, thay vì lấy mô hình ở epoch cuối cùng (nơi rủi ro overfitting cao nhất), nhóm thực hiện lưu trữ checkpoint dựa trên chỉ số F1-Score tốt nhất trên tập Validation.
+    \item \textbf{Tối ưu hóa hàm mục tiêu:} Với SVM, việc sử dụng hàm Hinge Loss kết hợp với thuật toán tối ưu SGD giúp mô hình tìm được siêu phẳng phân cách tối ưu với biên (margin) rộng nhất, giảm thiểu rủi ro quá khớp so với các phương pháp tối ưu cục bộ.
+    \item \textbf{Weight Decay:} Áp dụng kỹ thuật suy giảm trọng số (với hệ số $0.01$ cho PhoBERT) để phạt các trọng số quá lớn, giữ cho mô hình đơn giản và mượt mà hơn.
+\end{itemize}
+
+\subsection{Phân tích các trường hợp sai (Error Analysis)}
+Quan sát Ma trận nhầm lẫn (Confusion Matrix) của cả ba mô hình, nhóm nhận thấy một quy luật sai số chung: Lỗi tập trung chủ yếu ở nhãn \textbf{"Thời sự"} (Lớp 6).
+
+\begin{itemize}
+    \item \textbf{Mô tả lỗi:} Nhãn "Thời sự" thường xuyên bị dự đoán nhầm thành "Chính trị" (Lớp 4) và "Kinh tế" (Lớp 3). Ngược lại, một số bài viết "Kinh tế" cũng bị nhầm sang "Thời sự".
+    \item \textbf{Giả thuyết nguyên nhân (Hypothesis):} Nguyên nhân chính xuất phát từ sự \textit{nhập nhằng ngữ nghĩa (Semantic Ambiguity)} và tính chất bao hàm của khái niệm "Thời sự". 
+    \begin{itemize}
+        \item Một bản tin thời sự nóng hổi thường đề cập đến các quyết sách mới (chứa từ vựng Chính trị) hoặc biến động thị trường (chứa từ vựng Kinh tế).
+        \item \textit{Ví dụ:} Một bài báo có tiêu đề \textit{"Chính phủ họp phiên thường kỳ về giải ngân vốn đầu tư công"} thực chất là tin thời sự trong ngày, nhưng chứa dày đặc các thực thể như "Chính phủ" (đặc trưng Chính trị) và "Vốn đầu tư" (đặc trưng Kinh tế).
+    \end{itemize}
+    \item \textbf{So sánh hành vi mô hình:} 
+    \begin{itemize}
+        \item \textbf{FastText} dựa trên n-grams nên rất dễ bị đánh lừa bởi các từ khóa chuyên ngành xuất hiện trong văn bản thời sự (tỷ lệ nhầm lẫn cao nhất).
+        \item \textbf{PhoBERT} nhờ cơ chế Self-Attention có khả năng hiểu ngữ cảnh toàn cục tốt hơn, do đó giảm thiểu đáng kể tỷ lệ nhầm lẫn này so với hai mô hình còn lại, tuy nhiên vẫn chưa thể triệt tiêu hoàn toàn do sự giao thoa nội dung quá lớn.
+    \end{itemize}
+\end{itemize}
+
+\subsection{So sánh hiệu năng các mô hình}
+Bảng dưới đây tóm tắt và so sánh hiệu năng của ba hướng tiếp cận trên tập kiểm thử (Test Set):
+
+\begin{table}[H]
+\centering
+\caption{Bảng so sánh hiệu năng giữa các mô hình trên tập Test}
+\label{tab:model-comparison}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Mô hình} & \textbf{Accuracy} & \textbf{Macro Precision} & \textbf{Macro Recall} & \textbf{Macro F1} \\ \hline
+TF-IDF + SVM & 95.14\% & 95.13\% & 95.07\% & 95.04\% \\ \hline
+FastText & 91.82\% & 91.70\% & 91.72\% & 91.68\% \\ \hline
+\textbf{PhoBERT} & \textbf{95.52\%} & \textbf{95.54\%} & \textbf{95.52\%} & \textbf{95.52\%} \\ \hline
+\end{tabular}
+\end{table}
+
+\textbf{Kết luận:}
+\begin{enumerate}
+    \item \textbf{PhoBERT} cho kết quả vượt trội nhất trên mọi chỉ số. Điều này khẳng định sức mạnh của mô hình ngôn ngữ tiền huấn luyện và kiến trúc Transformer trong việc xử lý các đặc điểm ngôn ngữ phức tạp của tiếng Việt.
+    \item \textbf{TF-IDF + SVM} là một baseline cực kỳ mạnh mẽ, đạt hiệu năng xấp xỉ PhoBERT (chỉ kém $\sim 0.4\%$) nhưng với chi phí tính toán thấp hơn rất nhiều. Điều này cho thấy với dữ liệu văn bản báo chí được tiền xử lý tốt, các phương pháp truyền thống vẫn rất hiệu quả.
+    \item \textbf{FastText} tuy có tốc độ huấn luyện nhanh nhất nhưng hiệu năng thấp hơn đáng kể ($\sim 91.8\%$). Hạn chế của việc chỉ dựa vào trung bình hóa vector từ (word averaging) khiến mô hình khó nắm bắt được cấu trúc câu phức tạp so với PhoBERT.
+\end{enumerate}

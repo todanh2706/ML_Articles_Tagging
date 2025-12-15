@@ -1,0 +1,41 @@
+\pagebreak
+\section{Tổng quan về dữ liệu đầu vào}
+Bộ dữ liệu sử dụng cho việc huấn luyện và đánh giá mô hình bao gồm \textbf{20,777} bài báo được thu thập từ báo Thanh Niên, sau khi đã qua các bước làm sạch và loại bỏ nhiễu.
+\subsection{Dữ liệu huấn luyện}
+Dữ liệu được phân chia thành 3 tập riêng biệt: \textbf{Train}, \textbf{Validation}, và \textbf{Test} với tỷ lệ 80/10/10. Cụ thể:
+\begin{itemize}
+    \item \textbf{Tập Train (80\%):} Dùng để huấn luyện các tham số của mô hình.
+    \item \textbf{Tập Validation (10\%):} Dùng để tinh chỉnh siêu tham số (hyperparameter tuning) và đánh giá trong quá trình huấn luyện nhằm tránh overfitting.
+    \item \textbf{Tập Test (10\%):} Dùng để đánh giá khách quan hiệu năng cuối cùng của mô hình.
+\end{itemize}
+Lý do lựa chọn tỷ lệ này:
+\begin{itemize}
+    \item Với kích thước bộ dữ liệu tương đối lớn (gần 21,000 mẫu), việc dành 80\% cho tập huấn luyện giúp mô hình học được tối đa các đặc trưng từ vựng phong phú của tiếng Việt.
+    \item Tỷ lệ 10\% cho tập Validation và Test tương ứng với khoảng hơn 2,000 mẫu cho mỗi tập. Đây là con số đủ lớn về mặt thống kê để đảm bảo độ tin cậy của kết quả đánh giá mà không gặp phải phương sai quá lớn.
+    \item Nhóm áp dụng kỹ thuật Lấy mẫu phân tầng (Stratified Sampling) khi chia dữ liệu để đảm bảo tỷ lệ phân bố của 7 nhãn chủ đề là đồng đều trên cả 3 tập, tránh hiện tượng lệch dữ liệu (data shift) gây ảnh hưởng đến kết quả kiểm thử.
+\end{itemize}
+\subsection{Tiền xử lý}
+Quy trình tiền xử lý được thiết kế chặt chẽ để chuyển đổi dữ liệu thô thành dạng vector phù hợp cho từng loại kiến trúc mô hình. Các bước chính bao gồm:\\
+\paragraph{Bước 1: Làm sạch dữ liệu (Data Cleaning)}
+\begin{itemize}
+    \item Loại bỏ các thẻ HTML, CSS, JavaScript rác và các ký tự đặc biệt không mang ngữ nghĩa.
+    \item Xử lý các giá trị thiếu (missing values) và loại bỏ hoàn toàn các bài báo trùng lặp nội dung để tránh rò rỉ dữ liệu (data leakage).
+    \item Chuẩn hóa bảng mã về định dạng Unicode NFC thống nhất cho toàn bộ văn bản.
+\end{itemize}
+\paragraph{Bước 2: Xử lý đặc thù theo mô hình (Model-specific Preprocessing)}
+Nhận thấy sự khác biệt về cơ chế hoạt động giữa các mô hình, nhóm chia luồng xử lý thành hai hướng riêng biệt:
+\begin{itemize}
+    \item \textbf{Đối với mô hình truyền thống (SVM, FastText):}
+    \begin{itemize}
+        \item \textbf{Chuẩn hóa ký tự thường (Lowercasing):} Đưa toàn bộ văn bản về chữ thường để giảm chiều dữ liệu của bộ từ điển.
+        \item \textbf{Tách từ (Word Segmentation):} Sử dụng thư viện \texttt{pyvi} \cite{pyvi} để nhận diện và ghép các từ ghép tiếng Việt (ví dụ: "\texttt{học\_máy}", "\texttt{trí\_tuệ\_nhân\_tạo}").
+        \item \textbf{Loại bỏ từ dừng (Stopword Removal):} Lọc bỏ các từ hư từ, từ chức năng ít mang ý nghĩa phân loại dựa trên danh sách từ dừng tiếng Việt chuẩn.
+    \end{itemize}
+    \item \textbf{Đối với mô hình Transformer (PhoBERT):}
+    \begin{itemize}
+        \item \textbf{Giữ nguyên định dạng gốc:} Không chuyển về chữ thường và không loại bỏ từ dừng. Điều này nhằm bảo toàn cấu trúc ngữ pháp và ngữ cảnh (context), giúp cơ chế Attention của PhoBERT nắm bắt tốt hơn ý nghĩa của câu.
+        \item \textbf{Tách từ (Word Segmentation):} Vẫn thực hiện tách từ bằng công cụ chuyên dụng (\textbf{VnCoreNLP} \cite{vncorenlp}) để đồng bộ với cách thức mà PhoBERT đã được tiền huấn luyện.
+    \end{itemize}
+\end{itemize}
+\paragraph{Bước 3: Mã hóa nhãn (Label Encoding)}
+Các nhãn dạng văn bản (String) được ánh xạ sang dạng số nguyên (Integer) từ $0$ đến $6$ để phục vụ cho việc tính toán hàm mất mát (Loss function).

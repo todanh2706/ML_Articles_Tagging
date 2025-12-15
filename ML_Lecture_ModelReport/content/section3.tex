@@ -1,0 +1,141 @@
+\pagebreak
+\section{Lựa chọn mô hình và kiến trúc}
+
+\subsection{Mô hình sử dụng}
+Dự án triển khai với ba hướng tiếp cận chính:
+\begin{enumerate}
+    \item TF-IDF + Logistic Regression (Baseline):  
+    Văn bản được biểu diễn bằng vector TF-IDF, sau đó huấn luyện mô hình Logistic Regression để phân loại.
+    \item FastText\cite{joulin2016bagtricksefficienttext}:  
+    Sử dụng mô hình học sâu để biểu diễn từ và huấn luyện nhanh, nhằm kiểm chứng hiệu quả trên tiếng Việt.
+    \item PhoBERT (Transformer):  
+    Mô hình PhoBERT của VinAI được fine-tune trên bộ dữ liệu thu thập, kỳ vọng đạt hiệu năng cao nhất.
+\end{enumerate}
+Các mô hình được huấn luyện bằng Python với các thư viện scikit-learn, PyTorch và transformers \cite{scikit-learn, pytorch, wolf-etal-2020-transformers}.  
+
+\subsection{Lý do lựa chọn}
+
+Bài toán của dự án là gắn nhãn tự động bài báo tiếng Việt theo dạng phân loại đơn lớp (single-label classification), trong đó mỗi bài báo chỉ thuộc một trong bảy nhãn (Chính trị, Kinh tế, Giáo dục, \dots). Tập dữ liệu gồm khoảng 20{,}000 bài báo thu thập từ Báo Thanh Niên, với nội dung văn bản tương đối dài, giàu ngữ cảnh và có nhiều chủ đề gần nhau về mặt ngữ nghĩa. Do đó, nhóm lựa chọn các mô hình theo lộ trình từ đơn giản đến phức tạp nhằm vừa đảm bảo khả năng kiểm chứng, vừa tối ưu chất lượng dự đoán.
+
+\begin{enumerate}
+    \item TF-IDF + Logistic Regression  
+
+    Mô hình TF-IDF + Logistic Regression được sử dụng làm baseline cho bài toán phân loại đơn lớp vì Logistic Regression là phương pháp kinh điển trong phân loại chủ đề, hoạt động hiệu quả khi mỗi văn bản chỉ thuộc một nhãn.  
+    Các chuyên mục báo chí thường có tập từ vựng đặc thù; biểu diễn TF-IDF giúp mô hình phân biệt các nhãn dựa trên sự xuất hiện và mức độ quan trọng của từ khóa. Với quy mô 50k bài báo, mô hình tuyến tính cho phép huấn luyện và tinh chỉnh siêu tham số nhiều lần mà không tốn nhiều tài nguyên. Ngoài ra, trọng số đặc trưng của từng lớp giúp phân tích đặc điểm ngôn ngữ của mỗi nhãn và phát hiện các trường hợp gán nhãn chưa chính xác.
+
+    \item FastText  
+
+    FastText được sử dụng như một bước mở rộng từ mô hình tuyến tính sang học sâu cho bài toán phân loại đơn lớp. Mô hình sử dụng embedding kèm cơ chế subword giúp nhận diện các bài viết cùng chủ đề dù khác cách diễn đạt, đặc biệt phù hợp với tiếng Việt. So với Transformer, FastText có kiến trúc nhẹ hơn nhiều, cho phép đánh giá mức cải thiện so với TF-IDF trước khi đầu tư fine-tune mô hình lớn.
+
+    \item PhoBERT (Transformer)  
+
+    PhoBERT được lựa chọn là mô hình chính nhằm đạt chất lượng dự đoán cao nhất. Cơ chế self-attention cho phép mô hình học quan hệ giữa các từ trong toàn bộ bài báo, đặc biệt quan trọng với các chủ đề có nội dung chồng lấn. PhoBERT đã được huấn luyện trước trên tập dữ liệu tiếng Việt lớn, giúp mô hình có kiến thức ngôn ngữ nền và thích nghi nhanh khi fine-tune. Trong các trường hợp tiêu đề gây nhiễu hoặc cách diễn đạt mới, PhoBERT thường ổn định hơn so với TF-IDF và FastText.
+\end{enumerate}
+
+\subsection{Kiến trúc chi tiết (Đối với Deep Learning)}
+
+Đồ án sử dụng hai mô hình Deep Learning là FastText và PhoBERT. Mô hình TF-IDF + Logistic Regression không được mô tả trong phần này do không thuộc nhóm Deep Learning.
+
+\subsubsection{FastText}
+
+FastText được sử dụng như một mô hình học sâu nhẹ, đóng vai trò trung gian giữa baseline tuyến tính và Transformer.
+
+\paragraph{Luồng xử lý dữ liệu}
+Quy trình xử lý và suy luận của FastText gồm các bước sau:
+\begin{enumerate}
+    \item Văn bản đầu vào được làm sạch và ghép từ \texttt{title} và \texttt{content}, sau đó chuyển sang định dạng huấn luyện FastText với tiền tố nhãn \texttt{\_\_label\_\_}.
+    \item Mỗi từ được ánh xạ thành vector embedding thông qua cơ chế subword $n$-gram.
+    \item Các embedding của toàn bộ câu được trung bình để tạo biểu diễn vector cố định cho văn bản.
+    \item Vector này được đưa qua một tầng tuyến tính để sinh logits cho 7 nhãn.
+    \item Softmax được áp dụng để chọn nhãn có xác suất cao nhất.
+\end{enumerate}
+
+\paragraph{Sơ đồ kiến trúc}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=1.6cm,
+    every node/.style={draw, rounded corners, align=center, minimum height=0.9cm},
+    arrow/.style={->, thick}
+]
+\node (input) {Văn bản\\(title + content)};
+\node (token) [below of=input] {Token / Subword\\Embedding lookup};
+\node (avg) [below of=token] {Average Pooling};
+\node (linear) [below of=avg] {Linear (7 logits)};
+\node (softmax) [below of=linear] {Softmax};
+\node (output) [below of=softmax] {Nhãn dự đoán};
+
+\draw[arrow] (input) -- (token);
+\draw[arrow] (token) -- (avg);
+\draw[arrow] (avg) -- (linear);
+\draw[arrow] (linear) -- (softmax);
+\draw[arrow] (softmax) -- (output);
+\end{tikzpicture}
+\caption{Sơ đồ kiến trúc FastText}
+\end{figure}
+
+\paragraph{Số lượng tham số}
+FastText không có kiến trúc tầng sâu. Số lượng tham số chủ yếu đến từ:
+\[
+|V_{\text{subword}}| \times d + 7 \times d
+\]
+trong đó $d$ là kích thước embedding (thường từ 100 đến 300). Với từ điển subword quy mô vài trăm nghìn, mô hình có kích thước vài chục triệu tham số. Phiên bản quantized được sử dụng trong dự án giới hạn dung lượng khoảng 20MB.
+
+\paragraph{Hàm kích hoạt}
+FastText không sử dụng hàm kích hoạt phi tuyến giữa các tầng; chỉ áp dụng Softmax tại tầng đầu ra.
+
+% \paragraph{Nhận xét}
+% FastText có ưu điểm là kiến trúc nhẹ, huấn luyện và suy luận nhanh, phù hợp cho triển khai quy mô lớn. Tuy nhiên, do dựa trên bag-of-subwords, mô hình hạn chế trong việc nắm bắt ngữ cảnh dài và quan hệ cú pháp.
+
+\subsubsection{PhoBERT (Transformer)}
+
+PhoBERT là mô hình Deep Learning chính của hệ thống, được fine-tune cho bài toán phân loại bài báo tiếng Việt.
+
+\paragraph{Luồng xử lý dữ liệu}
+Quy trình xử lý của PhoBERT được thực hiện như sau:
+\begin{enumerate}
+    \item Văn bản đầu vào được tách từ bằng \texttt{PyVi} và token hóa bằng BPE, giới hạn tối đa 256 token.
+    \item Sinh các tensor \texttt{input\_ids} và \texttt{attention\_mask}.
+    \item Dữ liệu đi qua tầng embedding kích thước 768.
+    \item Qua 12 tầng Transformer encoder.
+    \item Vector ẩn của token \texttt{[CLS]} được trích xuất làm biểu diễn toàn văn bản.
+    \item Vector này đi qua dropout và tầng tuyến tính để sinh logits.
+    \item Softmax được áp dụng để suy ra nhãn cuối cùng.
+\end{enumerate}
+
+\paragraph{Sơ đồ kiến trúc}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=1.4cm,
+    every node/.style={draw, rounded corners, align=center, minimum height=0.9cm},
+    arrow/.style={->, thick}
+]
+\node (input) {Văn bản đã tách từ};
+\node (bpe) [below of=input] {BPE Tokenizer};
+\node (embed) [below of=bpe] {Embedding (768-d)};
+\node (enc) [below of=embed] {Transformer Encoder $\times 12$};
+\node (cls) [below of=enc] {[CLS]};
+\node (linear) [below of=cls] {Dropout + Linear};
+\node (softmax) [below of=linear] {Softmax};
+\node (output) [below of=softmax] {Nhãn dự đoán};
+
+\draw[arrow] (input) -- (bpe);
+\draw[arrow] (bpe) -- (embed);
+\draw[arrow] (embed) -- (enc);
+\draw[arrow] (enc) -- (cls);
+\draw[arrow] (cls) -- (linear);
+\draw[arrow] (linear) -- (softmax);
+\draw[arrow] (softmax) -- (output);
+\end{tikzpicture}
+\caption{Sơ đồ kiến trúc PhoBERT}
+\end{figure}
+
+\paragraph{Số lượng tham số}
+PhoBERT-base có khoảng 135 triệu tham số, gồm 12 tầng encoder, hidden size 768, feed-forward size 3072, 12 attention heads và vocabulary BPE khoảng 64k token. Tầng phân loại bổ sung có ma trận trọng số kích thước $768 \times 7$ và bias 7.
+
+\paragraph{Hàm kích hoạt}
+PhoBERT sử dụng GELU trong các khối feed-forward của Transformer encoder và Softmax tại tầng đầu ra.
+
+% \paragraph{Nhận xét}
+% PhoBERT có độ phức tạp tính toán cao hơn FastText do cơ chế self-attention, nhưng đổi lại mô hình nắm bắt tốt ngữ cảnh dài và đặc trưng ngôn ngữ tiếng Việt, phù hợp cho bài toán gắn nhãn bài báo theo chuyên mục.
