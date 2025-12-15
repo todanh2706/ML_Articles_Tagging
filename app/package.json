@@ -1,0 +1,30 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "SSR web app to experiment and compare ML models for Vietnamese news tagging",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "build:css": "npx tailwindcss -i ./public/css/styles.css -o ./public/css/output.css",
+    "test": "echo \"No automated tests defined\" && exit 0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "autoprefixer": "^10.4.22",
+    "axios": "^1.7.7",
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1",
+    "express-handlebars": "^8.0.4",
+    "form-data": "^4.0.2",
+    "multer": "^1.4.5-lts.1",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.17"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="200" viewBox="0 0 720 200" fill="none">
+  <rect width="720" height="200" fill="#F8FAFC"/>
+  <text x="24" y="32" fill="#0F172A" font-family="Inter, Arial" font-size="18" font-weight="700">So sánh trên 1 bài báo (demo)</text>
+  <text x="24" y="54" fill="#475569" font-family="Inter, Arial" font-size="13">True tag vs dự đoán 3 model</text>
+
+  <rect x="24" y="70" width="672" height="110" rx="12" fill="#FFFFFF" stroke="#E2E8F0"/>
+  <g transform="translate(40 88)">
+    <text x="0" y="0" fill="#94A3B8" font-family="Inter, Arial" font-size="12">True tag</text>
+    <text x="0" y="20" fill="#0F172A" font-family="Inter, Arial" font-size="14" font-weight="700">Chinh tri</text>
+  </g>
+
+  <g transform="translate(180 84)">
+    <rect x="0" y="0" width="150" height="82" rx="10" fill="#EEF2FF"/>
+    <text x="12" y="24" fill="#312E81" font-family="Inter, Arial" font-size="12" font-weight="700">Model 1</text>
+    <text x="12" y="44" fill="#4338CA" font-family="Inter, Arial" font-size="13">Chinh tri</text>
+    <text x="12" y="64" fill="#16A34A" font-family="Inter, Arial" font-size="12">Đúng • 0.87</text>
+  </g>
+
+  <g transform="translate(350 84)">
+    <rect x="0" y="0" width="150" height="82" rx="10" fill="#ECFDF3"/>
+    <text x="12" y="24" fill="#065F46" font-family="Inter, Arial" font-size="12" font-weight="700">Model 2</text>
+    <text x="12" y="44" fill="#047857" font-family="Inter, Arial" font-size="13">Kinh te</text>
+    <text x="12" y="64" fill="#DC2626" font-family="Inter, Arial" font-size="12">Sai • 0.92</text>
+  </g>
+
+  <g transform="translate(520 84)">
+    <rect x="0" y="0" width="150" height="82" rx="10" fill="#FFF7ED"/>
+    <text x="12" y="24" fill="#7C2D12" font-family="Inter, Arial" font-size="12" font-weight="700">Model 3</text>
+    <text x="12" y="44" fill="#C2410C" font-family="Inter, Arial" font-size="13">Chinh tri</text>
+    <text x="12" y="64" fill="#16A34A" font-family="Inter, Arial" font-size="12">Đúng • 0.89</text>
+  </g>
+</svg>

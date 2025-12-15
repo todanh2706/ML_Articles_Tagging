@@ -1,0 +1,13 @@
+flask==3.1.0
+requests==2.32.3
+beautifulsoup4==4.12.3
+pandas==2.2.3
+scikit-learn==1.6.1
+fasttext==0.9.3
+transformers==4.46.3
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.2.2+cpu
+numpy==1.26.4
+newspaper3k==0.2.8
+lxml_html_clean==0.1.1
+feedparser==6.0.11
