@@ -85,7 +85,8 @@ class FastTextWrapper:
         self.top_k = top_k
 
     def predict(self, text: str) -> Prediction:
-        labels, probs = self.model.predict(text, k=min(self.top_k, len(self.labels)))
+        safe_text = (text or "").replace("\r", " ").replace("\n", " ")
+        labels, probs = self.model.predict(safe_text, k=min(self.top_k, len(self.labels)))
         cleaned = {normalize_label(lab): float(prob) for lab, prob in zip(labels, probs)}
         tag = max(cleaned, key=cleaned.get, default="")
         return Prediction(predicted_tag=tag, softmax=cleaned)

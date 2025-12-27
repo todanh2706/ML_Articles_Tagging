@@ -4,16 +4,16 @@ import { crawlTag } from '../config/flaskClient.js';
 const router = express.Router();
 
 const TAGS = [
-  { key: 'chinh-tri', label: 'Chinh tri' },
-  { key: 'kinh-te', label: 'Kinh te' },
-  { key: 'giao-duc', label: 'Giao duc' },
-  { key: 'the-thao', label: 'The thao' },
-  { key: 'giai-tri', label: 'Giai tri' },
-  { key: 'cong-nghe', label: 'Cong nghe' },
-  { key: 'doi-song', label: 'Doi song' },
+  { key: 'chinh-tri', label: 'Chính trị' },
+  { key: 'kinh-te', label: 'Kinh tế' },
+  { key: 'giao-duc', label: 'Giáo dục' },
+  { key: 'the-thao', label: 'Thể thao' },
+  { key: 'giai-tri', label: 'Giải trí' },
+  { key: 'cong-nghe', label: 'Công nghệ' },
+  { key: 'doi-song', label: 'Đời sống' },
 ];
 
-const PAGE_TITLE = 'Gan tag tu dong';
+const PAGE_TITLE = 'Gán tag tự động';
 
 router.get('/', (_req, res) => {
   res.render('autotag', { pageTitle: PAGE_TITLE, title: PAGE_TITLE, tags: TAGS, activePage: 'autotag' });

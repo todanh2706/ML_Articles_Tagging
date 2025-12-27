@@ -38,6 +38,9 @@
               <span>{{name}}</span>
               <span>{{predicted_tag}}</span>
             </div>
+            {{#if error}}
+            <div class="text-xs text-red-600">Error: {{error}}</div>
+            {{/if}}
             {{#if softmaxList}}
             {{#each softmaxList}}
             <div class="mt-2">

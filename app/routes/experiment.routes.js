@@ -16,7 +16,7 @@ const upload = multer({
   },
 });
 
-const PAGE_TITLE = 'Thuc nghiem mo hinh';
+const PAGE_TITLE = 'Thực nghiệm mô hình';
 
 router.get('/', (_req, res) => {
   res.render('experiment', { pageTitle: PAGE_TITLE, title: PAGE_TITLE, activePage: 'experiment' });

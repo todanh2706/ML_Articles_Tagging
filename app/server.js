@@ -37,14 +37,14 @@ app.engine(
         if (!value) return '';
 
         let s = String(value);
-        // cắt phần microseconds .462870 cho chắc ăn
+        // Strip microseconds (e.g. .462870) for consistent parsing.
         if (s.includes('.')) {
           s = s.split('.')[0]; // "2025-12-10T21:09:56"
         }
 
         const date = new Date(s);
         if (isNaN(date.getTime())) {
-          return value; // parse không được thì trả nguyên
+          return value; // Keep original value if parsing fails.
         }
 
         const pad = (n) => String(n).padStart(2, '0');

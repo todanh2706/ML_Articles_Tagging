@@ -89,8 +89,25 @@ def normalize_tag(tag: str) -> str:
 def format_prediction(model, text: str) -> Dict:
     try:
         raw = model.predict(text)
-        predicted_tag = raw.predicted_tag if hasattr(raw, "predicted_tag") else raw.get("predicted_tag")
-        softmax = raw.softmax if hasattr(raw, "softmax") else raw.get("softmax", raw.get("probs", {}))
+        predicted_tag = None
+        softmax = {}
+
+        if hasattr(raw, "predicted_tag"):
+            predicted_tag = raw.predicted_tag
+        elif isinstance(raw, dict):
+            predicted_tag = raw.get("predicted_tag") or raw.get("label")
+
+        if hasattr(raw, "softmax"):
+            softmax = raw.softmax
+        elif isinstance(raw, dict):
+            softmax = raw.get("softmax") or raw.get("probs") or softmax
+        elif isinstance(raw, tuple) and len(raw) == 2:
+            labels, probs = raw
+            softmax = {normalize_label(lab): float(prob) for lab, prob in zip(labels, probs)}
+
+        if not predicted_tag and isinstance(softmax, dict) and softmax:
+            predicted_tag = max(softmax, key=softmax.get, default=None)
+
         return {"name": model.name, "predicted_tag": predicted_tag, "softmax": softmax}
     except Exception as exc:  # pragma: no cover - defensive for runtime issues
         return {"name": model.name, "predicted_tag": None, "softmax": {}, "error": str(exc)}
@@ -101,7 +118,8 @@ def predict_with_models(text: str) -> List[Dict]:
 
 
 def iter_feed_articles(source: str, tag: str, max_items: int) -> Iterable[Dict]:
-    rss_url = TAG_RSS_MAP.get(source, {}).get("home")
+    source_map = TAG_RSS_MAP.get(source, {})
+    rss_url = source_map.get(tag) or source_map.get("home")
     if not rss_url:
         return []
 
@@ -135,9 +153,10 @@ def score_article_for_tag(text: str, tag: str) -> Tuple[List[Dict], str, str, fl
         probs = m.get("softmax") or {}
         pred_tag = m.get("predicted_tag") or ""
         prob = get_true_prob(probs, normalized_tag)
-        if normalize_tag(pred_tag) == normalized_tag and prob > 0:
+        is_match = normalize_tag(pred_tag) == normalized_tag
+        if is_match and prob > 0:
             consensus_hits += 1
-        if prob > best_prob:
+        if is_match and prob > best_prob:
             best_prob = prob
             best_model = m.get("name") or ""
             best_pred_tag = pred_tag
@@ -249,19 +268,47 @@ def evaluate_text():
 def compute_summary(rows):
     summary = {}
     for model in MODELS:
-        preds = []
+        pairs = []
         for row in rows:
+            true_tag = normalize_tag(row.get("true_tag") or "")
+            pred_tag = ""
             for pred in row.get("models", []):
                 if pred.get("name") == model.name:
-                    preds.append(pred)
-        total = len(preds) or 1
-        correct = sum(1 for p in preds if p.get("correct"))
-        accuracy = round(correct / total, 3)
+                    pred_tag = normalize_tag(pred.get("predicted_tag") or "")
+                    break
+            if true_tag or pred_tag:
+                pairs.append((true_tag, pred_tag))
+
+        total = len(pairs)
+        correct = sum(1 for true_tag, pred_tag in pairs if true_tag == pred_tag)
+        accuracy = round(correct / total, 3) if total else 0.0
+
+        labels = sorted({t for t, _ in pairs if t} | {p for _, p in pairs if p})
+        precision = recall = f1 = 0.0
+        if labels:
+            precision_sum = 0.0
+            recall_sum = 0.0
+            f1_sum = 0.0
+            for label in labels:
+                tp = sum(1 for t, p in pairs if t == label and p == label)
+                fp = sum(1 for t, p in pairs if t != label and p == label)
+                fn = sum(1 for t, p in pairs if t == label and p != label)
+                prec = tp / (tp + fp) if (tp + fp) else 0.0
+                rec = tp / (tp + fn) if (tp + fn) else 0.0
+                f1_score = (2 * prec * rec / (prec + rec)) if (prec + rec) else 0.0
+                precision_sum += prec
+                recall_sum += rec
+                f1_sum += f1_score
+
+            precision = round(precision_sum / len(labels), 3)
+            recall = round(recall_sum / len(labels), 3)
+            f1 = round(f1_sum / len(labels), 3)
+
         summary[model.name] = {
             "accuracy": accuracy,
-            "precision": accuracy,
-            "recall": accuracy,
-            "f1": accuracy,
+            "precision": precision,
+            "recall": recall,
+            "f1": f1,
         }
     return summary
 
@@ -306,9 +353,14 @@ def crawl_tag():
     else:
         requested_sources = list(TAG_RSS_MAP.keys())
 
-    limit = request.args.get("limit", type=int) or 30
-    min_conf = request.args.get("min_conf", type=float) or 0.5
-    min_consensus = request.args.get("min_consensus", type=int) or 2
+    limit = request.args.get("limit", default=30, type=int)
+    min_conf = request.args.get("min_conf", default=0.5, type=float)
+    requested_min_consensus = request.args.get("min_consensus", type=int)
+    model_count = max(len(MODELS), 1)
+    if requested_min_consensus is None:
+        min_consensus = 2 if model_count >= 2 else 1
+    else:
+        min_consensus = max(0, min(requested_min_consensus, model_count))
 
     per_source_max = max(5, limit // max(len(requested_sources), 1) * 2)
 

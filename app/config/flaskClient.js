@@ -3,9 +3,12 @@ import FormData from 'form-data';
 
 const baseURL = process.env.FLASK_BASE_URL || 'http://localhost:5001';
 
+const DEFAULT_TIMEOUT_MS = Number(process.env.FLASK_TIMEOUT_MS) || 10000;
+const CRAWL_TIMEOUT_MS = Number(process.env.FLASK_CRAWL_TIMEOUT_MS) || 60000;
+
 const flask = axios.create({
   baseURL,
-  timeout: 10000,
+  timeout: DEFAULT_TIMEOUT_MS,
 });
 
 function toError(e, fallbackMessage) {
@@ -85,7 +88,7 @@ export async function evaluateCsv(fileBuffer, filename) {
 
 export async function crawlTag(tag) {
   try {
-    const { data } = await flask.get('/crawl/tag', { params: { tag } });
+    const { data } = await flask.get('/crawl/tag', { params: { tag }, timeout: CRAWL_TIMEOUT_MS });
     return data;
   } catch (e) {
     throw toError(e, 'Unable to crawl articles for tag');

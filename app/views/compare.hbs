@@ -1,7 +1,7 @@
 <div class="space-y-8">
   <div class="text-center">
     <h1 class="text-3xl font-bold text-gray-900">So sánh hiệu suất mô hình</h1>
-    <p class="mt-2 text-lg text-gray-600">Đánh giá và so sánh trên bài đơn và file CSV.</p>
+    <p class="mt-2 text-lg text-gray-600">Đánh giá và so sánh trên bài đơn lẻ và file CSV.</p>
   </div>
 
   <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
@@ -50,6 +50,9 @@
               <span class="text-xs text-gray-500">Dự đoán:</span>
               <div class="text-lg font-bold {{#if correct}}text-indigo-600{{else}}text-red-600{{/if}}">{{predicted_tag}}</div>
             </div>
+            {{#if error}}
+            <div class="text-xs text-red-600">Error: {{error}}</div>
+            {{/if}}
             <div class="mt-2">
               <span class="text-xs text-gray-500">Độ tin cậy (tag đúng):</span>
               <div class="text-sm font-medium">{{true_tag_prob}}</div>
@@ -163,7 +166,7 @@
                 {{#each ../modelNames}}
                 <td class="px-6 py-4 whitespace-nowrap">
                   {{#with (lookup ../modelMap this)}}
-                    <span class="{{#if correct}}text-green-600{{else}}text-red-600{{/if}} font-bold">{{#if correct}}✔{{else}}✖{{/if}}</span>
+                    <span class="{{#if correct}}text-green-600{{else}}text-red-600{{/if}} font-bold">{{#if correct}}✓{{else}}✗{{/if}}</span>
                     <span class="text-xs text-gray-500">{{predicted_tag}}</span>
                   {{/with}}
                 </td>

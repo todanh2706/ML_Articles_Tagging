@@ -8,6 +8,7 @@ function normalizeTag(value = '') {
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
     .toLowerCase()
+    .replace(/đ/g, 'd')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
   return cleaned;
@@ -26,7 +27,7 @@ const upload = multer({
   },
 });
 
-const PAGE_TITLE = 'So sanh hieu suat';
+const PAGE_TITLE = 'So sánh hiệu suất';
 
 router.get('/', (_req, res) => {
   res.render('compare', { pageTitle: PAGE_TITLE, title: PAGE_TITLE, activePage: 'compare' });
