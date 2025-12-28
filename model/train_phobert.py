@@ -72,7 +72,7 @@ def compute_metrics(eval_pred):
     preds = np.argmax(predictions, axis=1)
     
     acc = accuracy_score(labels, preds)
-    # Dùng weighted vì dữ liệu có thể lệch nhẹ, hoặc macro tùy yêu cầu báo cáo
+    # Dùng weighted vì dữ liệu có thể lệch nhẹ
     f1 = f1_score(labels, preds, average='weighted')
     
     return {'accuracy': acc, 'f1': f1}
@@ -264,7 +264,7 @@ if __name__ == "__main__":
         print(f"--> Đã lưu Confusion Matrix tại: ./results/confusion_matrix.png")
         plt.close()
         
-        # 4. Lưu các trường hợp dự đoán sai (Error Analysis - Yêu cầu )
+        # 4. Lưu các trường hợp dự đoán sai
         print("Saving error cases for analysis...")
         error_indices = np.where(preds != true_labels)[0]
         

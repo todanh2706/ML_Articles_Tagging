@@ -13,7 +13,7 @@ from sklearn.metrics import classification_report, f1_score
 # ================================
 FT_DIR = "./fasttext_data"
 
-TRAIN_TXT = os.path.join(FT_DIR, "train.txt")   # không bắt buộc dùng, chỉ để test() nếu cần
+TRAIN_TXT = os.path.join(FT_DIR, "train.txt")   
 VALID_TXT = os.path.join(FT_DIR, "valid.txt")
 TEST_TXT  = os.path.join(FT_DIR, "test.txt")
 

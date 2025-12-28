@@ -32,7 +32,7 @@ def save_fig(name: str):
 # ==========================
 # 1. Đọc dữ liệu từ SQLite
 # ==========================
-db_file_path = "./dataset/articles.db"  # nhớ đổi path nếu cần
+db_file_path = "./dataset/articles.db"  # đổi path nếu cần
 
 try:
     conn = sqlite3.connect(db_file_path)
@@ -145,7 +145,7 @@ save_fig("rel_title_len_by_source")
 
 
 # ===========================================
-# \subsection{Kiểm tra chất lượng dữ liệu}
+# Kiểm tra chất lượng dữ liệu
 # ===========================================
 
 # 3.1. Missing values
@@ -196,7 +196,7 @@ save_fig("quality_content_len_distribution")
 
 
 # ===========================================
-# \subsection{EDA cho dữ liệu phi cấu trúc}
+# EDA cho dữ liệu phi cấu trúc
 # ===========================================
 
 # 4.1. Số câu ước lượng trong content
