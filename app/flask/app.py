@@ -13,17 +13,32 @@ from models import load_models, normalize_label
 
 app = Flask(__name__)
 
-TAGS = ["chinh-tri", "kinh-te", "giao-duc", "the-thao", "giai-tri", "cong-nghe", "doi-song"]
-TAG_RSS_MAP = {
-    "vnexpress": {
-        "home": "https://vnexpress.net/rss/tin-moi-nhat.rss",
-    },
-    "thanhnien": {
-        "home": "https://thanhnien.vn/rss/home.rss",
-    },
-    "laodong": {
-        "home": "https://laodong.vn/rss/home.rss",
-    },
+TAGS = ["the-thao", "the-gioi", "giao-duc", "kinh-te", "chinh-tri", "suc-khoe", "thoi-su"]
+
+# Note: The mapping below expects normalized keys (lowercase, hyphens instead of underscores).
+# The user provided tags have underscores and accents: "thể_thao", etc.
+# normalize_label will convert "thể_thao" -> "thể-thao".
+DISPLAY_NAMES = {
+    # Accented keys (from new mapping)
+    "thể-thao": "Thể thao",
+    "thế-giới": "Thế giới",
+    "giáo-dục": "Giáo dục",
+    "kinh-tế": "Kinh tế",
+    "chính-trị": "Chính trị",
+    "sức-khỏe": "Sức khỏe",
+    "thời-sự": "Thời sự",
+
+    # Unaccented keys (legacy/FastText fallback)
+    "the-thao": "Thể thao",
+    "the-gioi": "Thế giới",
+    "giao-duc": "Giáo dục",
+    "kinh-te": "Kinh tế",
+    "chinh-tri": "Chính trị",
+    "suc-khoe": "Sức khỏe",
+    "thoi-su": "Thời sự",
+    "cong-nghe": "Công nghệ", # Legacy tag
+    "doi-song": "Đời sống",   # Legacy tag
+    "giai-tri": "Giải trí",   # Legacy tag
 }
 
 
@@ -108,7 +123,24 @@ def format_prediction(model, text: str) -> Dict:
         if not predicted_tag and isinstance(softmax, dict) and softmax:
             predicted_tag = max(softmax, key=softmax.get, default=None)
 
-        return {"name": model.name, "predicted_tag": predicted_tag, "softmax": softmax}
+        # Normalize predicted tag
+        normalized_pred = normalize_tag(predicted_tag)
+        
+        # Convert softmax keys to display names
+        display_softmax = {}
+        for tag, score in softmax.items():
+            norm_tag = normalize_tag(tag)
+            display_name = DISPLAY_NAMES.get(norm_tag, norm_tag)
+            display_softmax[display_name] = score
+            
+        display_predicted_tag = DISPLAY_NAMES.get(normalized_pred, normalized_pred)
+
+        return {
+            "name": model.name,
+            "predicted_tag": display_predicted_tag,
+            "softmax": display_softmax,
+            "raw_tag": normalized_pred 
+        }
     except Exception as exc:  # pragma: no cover - defensive for runtime issues
         return {"name": model.name, "predicted_tag": None, "softmax": {}, "error": str(exc)}
 
@@ -152,8 +184,18 @@ def score_article_for_tag(text: str, tag: str) -> Tuple[List[Dict], str, str, fl
     for m in models:
         probs = m.get("softmax") or {}
         pred_tag = m.get("predicted_tag") or ""
-        prob = get_true_prob(probs, normalized_tag)
-        is_match = normalize_tag(pred_tag) == normalized_tag
+        
+        # Simpler: In format_prediction we added "raw_tag". Let's use that if available.
+        raw_pred_tag = m.get("raw_tag")
+        if not raw_pred_tag:
+             raw_pred_tag = normalize_tag(pred_tag)
+
+        # To find prob of 'tag' (slug), we look for its display name in probs
+        display_name_of_tag = DISPLAY_NAMES.get(normalized_tag, normalized_tag)
+        prob = probs.get(display_name_of_tag, 0.0)
+        
+        is_match = (raw_pred_tag == normalized_tag)
+        
         if is_match and prob > 0:
             consensus_hits += 1
         if is_match and prob > best_prob:
