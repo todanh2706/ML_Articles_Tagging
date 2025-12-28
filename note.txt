@@ -1,0 +1,2 @@
+Fastext khong load duoc o trang Thuc nghiem mo hinh (full text) va so sanh hieu suat
+Gan tag tu dong chua hoat dong
