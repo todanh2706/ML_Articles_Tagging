@@ -17,9 +17,18 @@ TAGS = ["the-thao", "the-gioi", "giao-duc", "kinh-te", "chinh-tri", "suc-khoe", 
 
 # Note: The mapping below expects normalized keys (lowercase, hyphens instead of underscores).
 # The user provided tags have underscores and accents: "thể_thao", etc.
-# normalize_label will convert "thể_thao" -> "thể-thao".
+# normalize_label will convert "thể_thao" -> "thể-thao", "Giáo dục" -> "giáo dục".
 DISPLAY_NAMES = {
-    # Accented keys (from new mapping)
+    # Normalized versions of the NEW tags (space separated, lowercase)
+    "thể thao": "Thể thao",
+    "thế giới": "Thế giới",
+    "giáo dục": "Giáo dục",
+    "kinh tế": "Kinh tế",
+    "chính trị": "Chính trị",
+    "sức khỏe": "Sức khỏe",
+    "thời sự": "Thời sự",
+
+    # Accented keys (legacy mapping if needed)
     "thể-thao": "Thể thao",
     "thế-giới": "Thế giới",
     "giáo-dục": "Giáo dục",
@@ -36,9 +45,19 @@ DISPLAY_NAMES = {
     "chinh-tri": "Chính trị",
     "suc-khoe": "Sức khỏe",
     "thoi-su": "Thời sự",
-    "cong-nghe": "Công nghệ", # Legacy tag
-    "doi-song": "Đời sống",   # Legacy tag
-    "giai-tri": "Giải trí",   # Legacy tag
+}
+
+TAG_RSS_MAP = {
+    "vnexpress": {
+        "home": "https://vnexpress.net/rss/tin-moi-nhat.rss",
+    },
+    "thanhnien": {
+        "home": "https://thanhnien.vn/rss/home.rss",
+    },
+    "laodong": {
+        "home": "https://laodong.vn/rss/home.rss",
+    },
+
 }
 
 
@@ -175,6 +194,9 @@ def iter_feed_articles(source: str, tag: str, max_items: int) -> Iterable[Dict]:
 def score_article_for_tag(text: str, tag: str) -> Tuple[List[Dict], str, str, float, int]:
     models = predict_with_models(text)
     normalized_tag = normalize_tag(tag)
+    
+    # Resolve the canonical display name for the requested tag
+    target_display = DISPLAY_NAMES.get(normalized_tag, normalized_tag)
 
     best_model = ""
     best_pred_tag = ""
@@ -185,16 +207,16 @@ def score_article_for_tag(text: str, tag: str) -> Tuple[List[Dict], str, str, fl
         probs = m.get("softmax") or {}
         pred_tag = m.get("predicted_tag") or ""
         
-        # Simpler: In format_prediction we added "raw_tag". Let's use that if available.
-        raw_pred_tag = m.get("raw_tag")
-        if not raw_pred_tag:
-             raw_pred_tag = normalize_tag(pred_tag)
+        # Resolve the canonical display name for the predicted tag
+        # The predicted tag might be a slug or a display name already
+        norm_pred = normalize_tag(pred_tag)
+        pred_display = DISPLAY_NAMES.get(norm_pred, norm_pred)
 
-        # To find prob of 'tag' (slug), we look for its display name in probs
-        display_name_of_tag = DISPLAY_NAMES.get(normalized_tag, normalized_tag)
-        prob = probs.get(display_name_of_tag, 0.0)
+        # To find prob of 'tag', we look for its display name in probs
+        # (probs keys are already display names from format_prediction)
+        prob = probs.get(target_display, 0.0)
         
-        is_match = (raw_pred_tag == normalized_tag)
+        is_match = (pred_display == target_display)
         
         if is_match and prob > 0:
             consensus_hits += 1
@@ -207,9 +229,19 @@ def score_article_for_tag(text: str, tag: str) -> Tuple[List[Dict], str, str, fl
 
 
 def get_true_prob(probs: Dict, true_tag: str) -> float:
-    target = normalize_tag(true_tag)
+    # Resolve target to display name to match probs keys
+    normalized_true = normalize_tag(true_tag)
+    target_display = DISPLAY_NAMES.get(normalized_true, normalized_true)
+    
+    # probs keys are already Display Names (from format_prediction)
+    # But just in case, we check both direct key and normalized mapping
+    if target_display in probs:
+        return float(probs[target_display])
+
     for label, value in (probs or {}).items():
-        if normalize_tag(label) == target:
+        norm_label = normalize_tag(label)
+        label_display = DISPLAY_NAMES.get(norm_label, norm_label)
+        if label_display == target_display:
             try:
                 return float(value)
             except Exception:

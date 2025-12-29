@@ -8,9 +8,9 @@ const TAGS = [
   { key: 'kinh-te', label: 'Kinh tế' },
   { key: 'giao-duc', label: 'Giáo dục' },
   { key: 'the-thao', label: 'Thể thao' },
-  { key: 'giai-tri', label: 'Giải trí' },
-  { key: 'cong-nghe', label: 'Công nghệ' },
-  { key: 'doi-song', label: 'Đời sống' },
+  { key: 'the-gioi', label: 'Thế giới' },
+  { key: 'suc-khoe', label: 'Sức khỏe' },
+  { key: 'thoi-su', label: 'Thời sự' },
 ];
 
 const PAGE_TITLE = 'Gán tag tự động';
